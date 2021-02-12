@@ -1,6 +1,3 @@
-// Launch with following command :
-// node --max-old-space-size=4096 test-ftp.js
-
 const FTPClient = require('promise-ftp')
 const ftp = new FTPClient()
 const pump = require('util').promisify(require('pump'))

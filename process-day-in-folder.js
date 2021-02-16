@@ -48,10 +48,11 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
       domaine: domaine ? domaine[3] : 'Inconnu',
       particulier: lien[6] === '1',
       traitement_date_debut: day,
-      traitement_date_fin: undefined
+      traitement_date_fin: undefined,
+      folder
     }
     const { siret, code_qualification, organisme } = data
-    const records = collection.find({ siret, code_qualification, organisme, traitement_date_fin: undefined })
+    const records = collection.find({ siret, code_qualification, organisme })
     if (!records.length){
       collection.insert(data)
       inserted++
@@ -60,10 +61,12 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
        errorsStream.write(`${day} ${folder} - Error, ${records.length} records for ${siret}, ${code_qualification}, ${organisme}\n`)
     } else {
       const record = records.shift()
-      record.date_fin = data.date_fin
+      if(record.date_fin !== data.date_fin){
+        record.date_fin = data.date_fin
+        collection.update(record)
+        updated++
+      }
       delete unprocessedRecords[record.$loki]
-      collection.update(record)
-      updated++
       // let found = false
       // records.filter(r => !r.traitement_date_fin).forEach(record => {
       //   if (record.date_debut <= data.date_debut && record.date_fin >= data.date_fin) {

@@ -10,7 +10,7 @@ const config = require('config')
 const Loki = require('lokijs')
 const db = new Loki('ademe-rge')
 // const collection = db.addCollection('entreprises', {transactional: false} )
-const collection = db.addCollection('entreprises', { indices: ['siret', 'code_qualification', 'organisme'] })
+const collection = db.addCollection('entreprises', { indices: ['siret', 'code_qualification'] })
 
 const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`
 const folders = ['afnor', 'cequami', 'certibat', 'cnoa', 'opqibi', 'qualibat', 'qualifelec', 'qualitenr'] // archives folder empty, or nearly : certivea, icert, lne, opqtecc
@@ -32,7 +32,7 @@ const save = (date, temporary, writeHeader) => {
     return d
   })
   const archivedFile = path.join(__dirname, './data/rge-archived.csv')
-  if(temporary){
+  if(temporary) {
     console.log('Saving temporary files for date', date)
     const current = formatedDocs.filter(d => !d.traitement_date_fin || !d.traitement_date_fin.length)
     const archived = formatedDocs.filter(d => d.traitement_date_fin && d.traitement_date_fin.length)
@@ -70,7 +70,7 @@ const process = async () => {
   let daysList = Object.keys(days)
   daysList.sort()
   console.log(daysList.length, 'days from', daysList[0], 'to', daysList[daysList.length - 1])
-  const { lastProcessedDay, errorsStream } = await buildDbFromCsv(collection)
+  const { lastProcessedDay, errorsStream, statsStream } = await buildDbFromCsv(collection)
   let cpt = 0
   if (lastProcessedDay) {
     cpt = daysList.findIndex(d => d === lastProcessedDay) + 1
@@ -102,7 +102,7 @@ const process = async () => {
           files[file] = buffer
         }
         console.log(`${moment().format('LTS')} Processing ${day} ${folder}`)
-        processDayInFolder(files, collection, day, folder, unprocessedRecords, errorsStream)
+        processDayInFolder(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream)
       } catch (err) {
         errorsStream.write(`${day} ${folder} - Error processing files for date ${day} and folder ${folder} : ${err}\n`)
       }
@@ -123,6 +123,7 @@ const process = async () => {
   }
   await ftp.end()
   errorsStream.end()
+  statsStream.end()
   save('full')
 }
 

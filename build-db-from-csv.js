@@ -6,15 +6,20 @@ const fs = require('fs')
 const { promisify } = require('util')
 const readdir = promisify(fs.readdir)
 
+const statsHeader = ['day', 'folder', 'dayRecords', 'unmodified', 'inserted', 'dateUpdated', 'changed', 'closed']
+
 module.exports = async function(collection) {
   let lastDate
   try{
     lastDate = fs.readFileSync(path.join(__dirname, './data/rge-processing-date'), 'utf-8')
   }  catch(err){
     console.log('No files to restore from')
+    const statsStream = fs.createWriteStream(path.join(__dirname, './data/stats.csv'))
+    statsStream.write(statsHeader.map(h => `"${h}"`).join(',')+'\n')
     return {
       lastProcessedDay: null,
-      errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log'))
+      errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log')),
+      statsStream
     }
   }
   console.log('Restoring from date', lastDate)
@@ -30,6 +35,7 @@ module.exports = async function(collection) {
   console.log('Done restoring')
   return {
     lastProcessedDay: lastDate,
-    errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log'), {flags: 'a'})
+    errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log'), {flags: 'a'}),
+    statsStream: fs.createWriteStream(path.join(__dirname, './data/stats.csv'), {flags: 'a'})
   }
 }

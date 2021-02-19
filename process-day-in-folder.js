@@ -9,7 +9,23 @@ const fs = require('fs')
 const qualifDomaineLines = parse(fs.readFileSync(path.join(__dirname, 'RGE - Lien domaine qualification.csv')))
 const qualifDomaine = Object.assign({}, ...qualifDomaineLines.map(e => ({ [e[1]]: e })))
 
-module.exports = function(files, collection, day, folder, unprocessedRecords, errorsStream) {
+const checkFields = [
+  'entreprise_id_organisme',
+  'nom_entreprise',
+  'adresse',
+  'code_postal',
+  'commune',
+  'latitude',
+  'longitude',
+  'telephone',
+  'email',
+  'site_internet',
+  'url_qualification',
+  'nom_certificat',
+  'particulier'
+]
+
+module.exports = function(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream) {
   // const qualificationsData = fs.readFileSync(path.join(directory, folder, day + '-qualifications.csv'))
   const qualificationsLines = parse(iconv.convert(files.qualifications), parserOpts)
   const qualifications = Object.assign({}, ...qualificationsLines.map(q => ({ [q[0]]: q[1] })))
@@ -19,7 +35,9 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
   // const liensData = fs.readFileSync(path.join(directory, folder, day + '-liens.csv'))
   const liens = parse(iconv.convert(files.liens), parserOpts)
   let inserted = 0
-  let updated = 0
+  let dateUpdated = 0
+  let changed = 0
+  let unmodified = 0
   liens.forEach(lien => {
     const entreprise = entreprises[lien[0]]
     const qualification = qualifications[lien[1]]
@@ -49,41 +67,35 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
       particulier: lien[6] === '1',
       traitement_date_debut: day,
       traitement_date_fin: undefined,
-      folder
+      folder,
+      motif_insertion: undefined
     }
-    const { siret, code_qualification, organisme } = data
-    const records = collection.find({ siret, code_qualification, organisme })
+    const { siret, code_qualification } = data
+    const records = collection.find({ siret, code_qualification })
     if (!records.length){
       collection.insert(data)
       inserted++
     }
     else if(records.length >1) {
-       errorsStream.write(`${day} ${folder} - Error, ${records.length} records for ${siret}, ${code_qualification}, ${organisme}\n`)
+       errorsStream.write(`${day} ${folder} - Error, ${records.length} records for ${siret}, ${code_qualification}\n`)
     } else {
       const record = records.shift()
-      if(record.date_fin !== data.date_fin){
-        record.date_fin = data.date_fin
-        collection.update(record)
-        updated++
+      const changes = checkFields.filter(f => record[f] !== data[f])
+      if(changes.length) {
+        data.motif_insertion = changes.join(';')
+        collection.insert(data)
+        changed++
+      } else {
+        if(record.date_fin !== data.date_fin){
+          record.date_fin = data.date_fin
+          collection.update(record)
+          dateUpdated++
+        } else unmodified++
+        delete unprocessedRecords[record.$loki]
       }
-      delete unprocessedRecords[record.$loki]
-      // let found = false
-      // records.filter(r => !r.traitement_date_fin).forEach(record => {
-      //   if (record.date_debut <= data.date_debut && record.date_fin >= data.date_fin) {
-      //     found = true
-      //   } else if ((record.date_debut >= data.date_debut && record.date_debut <= data.date_fin) || (record.date_fin >= data.date_debut && record.date_fin <= data.date_fin)) {
-      //     found = true
-      //     // console.log('updating record', record.date_debut, data.date_debut, record.date_fin, data.date_fin, record.date_debut === data.date_debut && record.date_fin === data.date_fin)
-      //     record.date_debut = Math.min(record.date_debut, data.date_debut)
-      //     record.date_fin = Math.max(record.date_fin, data.date_fin)
-      //     collection.update(record)
-      //   }
-      // })
-      // if (!found) {
-      //   collection.insert(data)
-      //   // console.log('no overlap, adding a new record', records, data)
-      // }
     }
   })
-  console.log(`${moment().format('LTS')} Inserted ${inserted} records, updated ${updated} records`)
+  const closed = Object.values(unprocessedRecords).filter(r => r.folder === folder).length
+  statsStream.write(`"${day}","${folder}","${liens.length}","${unmodified}","${inserted}","${dateUpdated}","${changed}","${closed}"\n`)
+  console.log(`${moment().format('LTS')} Inserted ${inserted} records, updated date for ${dateUpdated} records, changed ${changed} records, closed ${closed} records, unmodified records : ${unmodified}`)
 }

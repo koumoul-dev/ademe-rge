@@ -13,7 +13,7 @@ const db = new Loki('ademe-rge')
 const collection = db.addCollection('entreprises', { indices: ['siret', 'code_qualification'] })
 
 const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`
-const folders = ['afnor', 'cequami', 'certibat', 'cnoa', 'opqibi', 'qualibat', 'qualifelec', 'qualitenr'] // archives folder empty, or nearly : certivea, icert, lne, opqtecc
+const folders = ['afnor', 'cequami', 'certibat', 'cnoa', 'opqibi', 'qualibat', 'qualifelec', 'qualitenr', 'lne', 'opqtecc'] // archives folder empty, or nearly : certivea, icert, lne, opqtecc
 
 const processDayInFolder = require('./process-day-in-folder')
 const buildDbFromCsv = require('./build-db-from-csv')
@@ -25,10 +25,10 @@ const save = (date, temporary, writeHeader) => {
   const formatedDocs = documents.map(doc => {
     const d = JSON.parse(JSON.stringify(doc))
     d.date_debut = d.date_debut + ''
-    d.date_fin = d.date_fin + ''
-    if (d.date_debut.length !== 8 || d.date_fin.length !== 8) console.log(d.date_debut, d.date_fin)
+    d.date_fin = (d.date_fin || '') + '' // It seems it can be null in some files ...
+    if (d.date_debut.length !== 8 || d.date_fin.length !== 8) console.log(date, 'Error for dates length', d.date_debut, d.date_fin)
     d.date_debut = `${d.date_debut.slice(0, 4)}-${d.date_debut.slice(4, 6)}-${d.date_debut.slice(6, 8)}`
-    d.date_fin = `${d.date_fin.slice(0, 4)}-${d.date_fin.slice(4, 6)}-${d.date_fin.slice(6, 8)}`
+    if(d.date_fin.length === 8) d.date_fin = `${d.date_fin.slice(0, 4)}-${d.date_fin.slice(4, 6)}-${d.date_fin.slice(6, 8)}`
     return d
   })
   const archivedFile = path.join(__dirname, './data/rge-archived.csv')
@@ -61,7 +61,7 @@ const process = async () => {
   for (const folder of folders) {
     console.log('Listing files in', folder)
     const files = await ftp.list(ftpPath(folder))
-    const folderDays = Array.from(new Set(files.map(f => f.name.split('-').shift())))
+    const folderDays = Array.from(new Set(files.map(f => f.name.split('-').shift()).filter(f => f.length === 8 && !f.includes('.'))))
     for (const day of folderDays) {
       days[day] = days[day] || []
       days[day].push(folder)

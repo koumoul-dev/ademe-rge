@@ -64,6 +64,7 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
       nom_certificat: lien[5],
       organisme: domaine ? domaine[0] : 'Inconnu',
       domaine: domaine ? domaine[3] : 'Inconnu',
+      meta_domaine: domaine ? domaine[4] : 'Inconnu',
       particulier: lien[6] === '1',
       traitement_date_debut: day,
       traitement_date_fin: undefined,
@@ -75,10 +76,8 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
     if (!records.length){
       collection.insert(data)
       inserted++
-    }
-    else if(records.length >1) {
-       errorsStream.write(`${day} ${folder} - Error, ${records.length} records for ${siret}, ${code_qualification}\n`)
     } else {
+      if(records.length >1) errorsStream.write(`${day} ${folder} - Error, ${records.length} records for ${siret}, ${code_qualification}\n`)
       const record = records.shift()
       const changes = checkFields.filter(f => record[f] !== data[f])
       if(changes.length) {

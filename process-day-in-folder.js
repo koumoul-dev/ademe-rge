@@ -44,6 +44,7 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
     const domaine = qualifDomaine[lien[1]]
     if (!entreprise || !qualification) errorsStream.write(`${day} ${folder} - Error, data do not match ${entreprise} ${qualification} ${lien} ${domaine}\n`)
     if (!domaine) errorsStream.write(`${day} ${folder} - Error, no domain for code ${lien[1]}\n`)
+    const year = day.slice(0, 4)
     const data = {
       entreprise_id_organisme: entreprise[0],
       siret: entreprise[1].padStart(14, '0'),
@@ -63,8 +64,8 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
       url_qualification: lien[4],
       nom_certificat: lien[5],
       organisme: domaine ? domaine[0] : 'Inconnu',
-      domaine: domaine ? domaine[3] : 'Inconnu',
-      meta_domaine: domaine ? domaine[4] : 'Inconnu',
+      domaine: domaine ? (year < '2021' ? domaine[4] || domaine[3] : domaine[3]) : 'Inconnu',
+      meta_domaine: domaine ? domaine[5] : 'Inconnu',
       particulier: lien[6] === '1',
       traitement_date_debut: day,
       traitement_date_fin: undefined,

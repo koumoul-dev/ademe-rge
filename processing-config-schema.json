@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "required": ["dataset"],
+  "properties": {
+    "dataset": {
+      "type": "object",
+      "require": ["id", "title"],
+      "properties": {
+        "id": { "type": "string", "title": "Identifiant du jeu de données", "default": "historique-rge" },
+        "title": { "type": "string", "title": "Titre du jeu de données", "default": "Historique RGE" },
+        "overwrite": { "type": "boolean", "title": "Surcharger un jeu de données existant", "default": false }
+      }
+    },
+    "folders": {
+      "type": "array",
+      "title": "Répertoires",
+      "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"],
+      "items": {
+        "type": "string",
+        "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"]
+      }
+    },
+    "maxDays": {
+      "type": "number",
+      "title": "Nombre maximum de jours",
+      "default": -1,
+      "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
+      "minimum": -1
+    }
+  }
+}

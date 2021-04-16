@@ -1,6 +1,7 @@
 
 exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axios, log }) => {
-  /* TODO: déterminer si on travaille avec un jeu incrémental ou fichier
+  const datasetSchema = require('./resources/schema.json')
+
   await log.step('Vérification du jeu de données')
   await log.info(`tentative de lecture du jeu ${processingConfig.dataset.id}`)
   try {
@@ -35,7 +36,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
     })).data
     await log.info('Le jeu a été créé')
     await log.debug('jeu de données créé', createdDataset)
-  } */
+  }
 
   const ftpOptions = {
     ftpOptions: {

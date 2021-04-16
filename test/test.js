@@ -36,9 +36,11 @@ describe('Hello world processing', () => {
         ftpOptions: config.ftpOptions
       },
       processingConfig: {
+        dataset: { id: 'historique-rge-test', title: 'Historique RGE test', overwrite: false },
         folders: ['qualibat'],
         maxDays: 2
       },
+      processingId: 'test',
       axios: axiosInstance,
       log: {
         step: (msg) => console.log(chalk.blue.bold.underline(`[${moment().format('LTS')}] ${msg}`)),

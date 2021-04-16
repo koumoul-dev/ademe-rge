@@ -25,7 +25,7 @@ const checkFields = [
   'particulier'
 ]
 
-module.exports = function(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream) {
+module.exports = function(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream, infosStream) {
   // const qualificationsData = fs.readFileSync(path.join(directory, folder, day + '-qualifications.csv'))
   const qualificationsLines = parse(iconv.convert(files.qualifications), parserOpts)
   const qualifications = Object.assign({}, ...qualificationsLines.map(q => ({ [q[0]]: q[1] })))
@@ -75,6 +75,8 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
     const { siret, code_qualification } = data
     const records = collection.find({ siret, code_qualification })
     if (!records.length){
+      // data.date_debut = day
+      // if(data.entreprise_id_organisme === '64') infosStream.write(`${day} ${folder} - Insert new : ${JSON.stringify(data, null, 2)}\n`)
       collection.insert(data)
       inserted++
     } else {
@@ -83,11 +85,14 @@ module.exports = function(files, collection, day, folder, unprocessedRecords, er
       const changes = checkFields.filter(f => record[f] !== data[f])
       if(changes.length) {
         data.motif_insertion = changes.join(';')
+        data.date_debut = day
+        // if(data.entreprise_id_organisme === '64') infosStream.write(`${day} ${folder} - Insert update : ${JSON.stringify(data, null, 2)}\n`)
         collection.insert(data)
         changed++
       } else {
         if(record.date_fin !== data.date_fin){
           record.date_fin = data.date_fin
+          // if(data.entreprise_id_organisme === '64') infosStream.write(`${day} ${folder} - Update : ${JSON.stringify(data, null, 2)}\n`)
           collection.update(record)
           dateUpdated++
         } else unmodified++

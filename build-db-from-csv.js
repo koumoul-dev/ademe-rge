@@ -19,6 +19,7 @@ module.exports = async function(collection) {
     return {
       lastProcessedDay: null,
       errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log')),
+      infosStream: fs.createWriteStream(path.join(__dirname, './log/infos.log')),
       statsStream
     }
   }
@@ -36,6 +37,7 @@ module.exports = async function(collection) {
   return {
     lastProcessedDay: lastDate,
     errorsStream: fs.createWriteStream(path.join(__dirname, './log/errors.log'), {flags: 'a'}),
-    statsStream: fs.createWriteStream(path.join(__dirname, './data/stats.csv'), {flags: 'a'})
+    statsStream: fs.createWriteStream(path.join(__dirname, './data/stats.csv'), {flags: 'a'}),
+    infosStream: fs.createWriteStream(path.join(__dirname, './log/infos.log'), {flags: 'a'})
   }
 }

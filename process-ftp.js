@@ -14,6 +14,7 @@ const collection = db.addCollection('entreprises', { indices: ['siret', 'code_qu
 
 const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`
 const folders = ['afnor', 'cequami', 'certibat', 'cnoa', 'opqibi', 'qualibat', 'qualifelec', 'qualitenr', 'lne', 'opqtecc'] // archives folder empty, or nearly : certivea, icert, lne, opqtecc
+// const folders = ['qualifelec']
 
 const processDayInFolder = require('./process-day-in-folder')
 const buildDbFromCsv = require('./build-db-from-csv')
@@ -21,35 +22,37 @@ const buildDbFromCsv = require('./build-db-from-csv')
 const save = (date, temporary, writeHeader) => {
   const filePath = path.join(__dirname, './data/rge-open.csv')
   const documents = collection.find()
-  const header = Object.keys(documents[0]).filter(f => f !== 'meta' && f!== '$loki')
-  const formatedDocs = documents.map(doc => {
-    const d = JSON.parse(JSON.stringify(doc))
-    d.date_debut = d.date_debut + ''
-    d.date_fin = (d.date_fin || '') + '' // It seems it can be null in some files ...
-    if (d.date_debut.length !== 8 || d.date_fin.length !== 8) console.log(date, 'Error for dates length', d.date_debut, d.date_fin)
-    d.date_debut = `${d.date_debut.slice(0, 4)}-${d.date_debut.slice(4, 6)}-${d.date_debut.slice(6, 8)}`
-    if(d.date_fin.length === 8) d.date_fin = `${d.date_fin.slice(0, 4)}-${d.date_fin.slice(4, 6)}-${d.date_fin.slice(6, 8)}`
-    return d
-  })
-  const archivedFile = path.join(__dirname, './data/rge-archived.csv')
-  if(temporary) {
-    console.log('Saving temporary files for date', date)
-    const current = formatedDocs.filter(d => !d.traitement_date_fin || !d.traitement_date_fin.length)
-    const archived = formatedDocs.filter(d => d.traitement_date_fin && d.traitement_date_fin.length)
-    fs.writeFileSync(filePath, csvStringify(current, { columns: header, header: true, quoted_string: true }))
-    fs.writeFileSync(archivedFile, csvStringify(archived, { columns: header, header: writeHeader, quoted_string: true }), {flag: 'a'})
-    archived.forEach(doc => {
-      collection.remove(doc)
+  if(documents.length){
+    const header = Object.keys(documents[0]).filter(f => f !== 'meta' && f!== '$loki')
+    const formatedDocs = documents.map(doc => {
+      const d = JSON.parse(JSON.stringify(doc))
+      d.date_debut = d.date_debut + ''
+      d.date_fin = (d.date_fin || '') + '' // It seems it can be null in some files ...
+      if (d.date_debut.length !== 8 || d.date_fin.length !== 8) console.log(date, 'Error for dates length', d.date_debut, d.date_fin)
+      d.date_debut = `${d.date_debut.slice(0, 4)}-${d.date_debut.slice(4, 6)}-${d.date_debut.slice(6, 8)}`
+      if(d.date_fin.length === 8) d.date_fin = `${d.date_fin.slice(0, 4)}-${d.date_fin.slice(4, 6)}-${d.date_fin.slice(6, 8)}`
+      return d
     })
-    fs.writeFileSync(path.join(__dirname, './data/rge-processing-date'), date)
-  } else{
-    console.log('Saving file for date', date)
-    const outFile = path.join(__dirname, `./data/rge-${date}.csv`)
-    if(fs.existsSync(archivedFile)){
-      fs.copyFileSync(archivedFile, outFile)
-      fs.writeFileSync(outFile, csvStringify(formatedDocs, { columns: header, header: false, quoted_string: true }), {flag: 'a'})
-    }else{
-      fs.writeFileSync(outFile, csvStringify(formatedDocs, { columns: header, header: true, quoted_string: true }))
+    const archivedFile = path.join(__dirname, './data/rge-archived.csv')
+    if(temporary) {
+      console.log('Saving temporary files for date', date)
+      const current = formatedDocs.filter(d => !d.traitement_date_fin || !d.traitement_date_fin.length)
+      const archived = formatedDocs.filter(d => d.traitement_date_fin && d.traitement_date_fin.length)
+      fs.writeFileSync(filePath, csvStringify(current, { columns: header, header: true, quoted_string: true }))
+      fs.writeFileSync(archivedFile, csvStringify(archived, { columns: header, header: writeHeader, quoted_string: true }), {flag: 'a'})
+      archived.forEach(doc => {
+        collection.remove(doc)
+      })
+      fs.writeFileSync(path.join(__dirname, './data/rge-processing-date'), date)
+    } else {
+      console.log('Saving file for date', date)
+      const outFile = path.join(__dirname, `./data/rge-${date}.csv`)
+      if(fs.existsSync(archivedFile)){
+        fs.copyFileSync(archivedFile, outFile)
+        fs.writeFileSync(outFile, csvStringify(formatedDocs, { columns: header, header: false, quoted_string: true }), {flag: 'a'})
+      }else{
+        fs.writeFileSync(outFile, csvStringify(formatedDocs, { columns: header, header: true, quoted_string: true }))
+      }
     }
   }
 }
@@ -70,7 +73,7 @@ const process = async () => {
   let daysList = Object.keys(days)
   daysList.sort()
   console.log(daysList.length, 'days from', daysList[0], 'to', daysList[daysList.length - 1])
-  const { lastProcessedDay, errorsStream, statsStream } = await buildDbFromCsv(collection)
+  const { lastProcessedDay, errorsStream, statsStream, infosStream } = await buildDbFromCsv(collection)
   let cpt = 0
   if (lastProcessedDay) {
     cpt = daysList.findIndex(d => d === lastProcessedDay) + 1
@@ -102,7 +105,7 @@ const process = async () => {
           files[file] = buffer
         }
         console.log(`${moment().format('LTS')} Processing ${day} ${folder}`)
-        processDayInFolder(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream)
+        processDayInFolder(files, collection, day, folder, unprocessedRecords, errorsStream, statsStream, infosStream)
       } catch (err) {
         errorsStream.write(`${day} ${folder} - Error processing files for date ${day} and folder ${folder} : ${err}\n`)
       }
@@ -113,6 +116,7 @@ const process = async () => {
     Object.values(unprocessedRecords).forEach(record => {
       record.traitement_date_fin = prevDay
       record.date_fin = Number(prevDay)
+      // if(record.entreprise_id_organisme === '64') infosStream.write(`${day} ${record.folder} - Close : ${JSON.stringify(record, null, 2)}\n`)
       collection.update(record)
     })
 
@@ -124,6 +128,7 @@ const process = async () => {
   await ftp.end()
   errorsStream.end()
   statsStream.end()
+  infosStream.end()
   save('full')
 }
 

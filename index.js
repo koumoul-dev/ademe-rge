@@ -1,44 +1,49 @@
 
 exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axios, log }) => {
   const datasetSchema = require('./resources/schema.json')
+  let dataset
 
   await log.step('Vérification du jeu de données')
   await log.info(`tentative de lecture du jeu ${processingConfig.dataset.id}`)
   try {
-    const dataset = (await axios.get(`api/v1/datasets/${processingConfig.dataset.id}`)).data
+    dataset = (await axios.get(`api/v1/datasets/${processingConfig.dataset.id}`)).data
     await log.debug('détail du jeu de données', dataset)
     if (dataset.extras && dataset.extras.processingId === processingId) {
       await log.info('le jeu de données existe et est rattaché à ce traitement')
     } else {
       if (processingConfig.dataset.overwrite) {
         await log.warning('le jeu de données existe et n\'est pas rattaché à ce traitement, l\'option "Surcharger un jeu existant" étant active le traitement peut continuer.')
-        await axios.patch(`api/v1/datasets/${processingConfig.dataset.id}`, {
+        dataset = (await axios.patch(`api/v1/datasets/${processingConfig.dataset.id}`, {
           extras: { ...dataset.extras, processingId }
-        })
+        })).data
       } else {
         throw new Error('le jeu de données existe et n\'est pas rattaché à ce traitement')
       }
     }
-    await axios.patch(`api/v1/datasets/${processingConfig.dataset.id}`, {
+    dataset = (await axios.patch(`api/v1/datasets/${processingConfig.dataset.id}`, {
       title: processingConfig.dataset.title,
       schema: datasetSchema
-    })
+    })).data
   } catch (err) {
     if (err.status !== 404) throw err
     await log.info('le jeu de données n\'existe pas encore')
 
     await log.step('Création du jeu de données')
-    const createdDataset = (await axios.put(`api/v1/datasets/${processingConfig.dataset.id}`, {
+    dataset = (await axios.put(`api/v1/datasets/${processingConfig.dataset.id}`, {
       title: processingConfig.dataset.title,
       isRest: true,
       schema: datasetSchema,
       extras: { processingId }
     })).data
     await log.info('Le jeu a été créé')
-    await log.debug('jeu de données créé', createdDataset)
+    await log.debug('jeu de données créé', dataset)
   }
+  const lastProcessedDays = dataset.extras.lastProcessedDays || {}
 
-  const ftpOptions = {
+  await log.step('Connexion au serveur FTP')
+  const FTPClient = require('promise-ftp')
+  const ftp = new FTPClient()
+  const serverMessage = await ftp.connect({
     ftpOptions: {
       host: 'localhost',
       port: 21,
@@ -50,6 +55,47 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
       autoReconnect: true
     },
     ...pluginConfig.ftpOptions
+  })
+  await log.info('connecté : ' + serverMessage)
+
+  for (const folder of processingConfig.folders) {
+    log.step(`Traitement du répertoire ${folder}`)
+    await log.info('récupération de la liste des fichiers dans le répertoire ' + folder)
+    const files = await ftp.list(ftpPath(folder))
+    let days = Array.from(new Set(files.map(f => f.name.split('-').shift()).filter(f => f.length === 8 && !f.includes('.'))))
+    days.sort()
+    await log.info(`interval de jours dans les fichiers : début = ${days[0]}, fin = ${days[days.length - 1]}`)
+
+    let previousState = {}
+    let previousDay
+    if (lastProcessedDays[folder]) {
+      const nbProcessedDays = days.findIndex(d => d === lastProcessedDays[folder]) + 1
+      await log.info(`nombre de jours déjà traités : ${nbProcessedDays}`)
+      days = days.slice(nbProcessedDays)
+      await log.info(`téléchargement de l'état au dernier jour traité ${lastProcessedDays[folder]}`)
+      previousState = await require('./lib/read-daily-state')(ftp, folder, lastProcessedDays[folder], log)
+      previousDay = lastProcessedDays[folder]
+    }
+
+    if (processingConfig.maxDays !== -1 && days.length > processingConfig.maxDays) {
+      days = days.slice(0, processingConfig.maxDays)
+      await log.info(`nombre de jours restreint par la configuration : ${days.length}`)
+    }
+
+    for (const day of days) {
+      await log.info(`téléchargement du nouvel état au jour ${day}`)
+      const state = await require('./lib/read-daily-state')(ftp, folder, day, log)
+      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day)
+      await log.info(`enregistrement des modifications dans le jeu de données : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
+      await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, bulk)
+      lastProcessedDays[folder] = day
+      await axios.patch(`api/v1/datasets/${dataset.id}`, {
+        extras: { ...dataset.extras, lastProcessedDays }
+      })
+      previousState = state
+      previousDay = day
+    }
   }
-  await require('./lib/process-ftp')(tmpDir, ftpOptions, processingConfig.folders, processingConfig.maxDays, log)
 }
+
+const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`

@@ -24,7 +24,7 @@
   },
   {
     "key": "code_postal",
-    "type": "integer",
+    "type": "string",
     "x-refersTo": "http://schema.org/postalCode",
     "title": "Code postal"
   },
@@ -76,14 +76,14 @@
   {
     "key": "date_debut",
     "type": "string",
-    "format": "date-time",
+    "format": "date",
     "x-refersTo": "https://schema.org/startDate",
     "title": "Date de début"
   },
   {
     "key": "date_fin",
     "type": "string",
-    "format": "date-time",
+    "format": "date",
     "x-refersTo": "https://schema.org/endDate",
     "title": "Date de fin"
   },
@@ -104,6 +104,11 @@
     "title": "Domaine de travaux"
   },
   {
+    "key": "meta_domaine",
+    "type": "string",
+    "title": "Méta domaine"
+  },
+  {
     "key": "organisme",
     "type": "string",
     "title": "Organisme"
@@ -116,13 +121,13 @@
   {
     "key": "traitement_date_debut",
     "type": "string",
-    "format": "date-time",
+    "format": "date",
     "title": "Date de début"
   },
   {
     "key": "traitement_date_fin",
     "type": "string",
-    "format": "date-time",
+    "format": "date",
     "title": "Date de fin"
   }
 ]

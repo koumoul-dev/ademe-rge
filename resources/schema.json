@@ -122,12 +122,12 @@
     "key": "traitement_date_debut",
     "type": "string",
     "format": "date",
-    "title": "Date de début"
+    "title": "Date de début du traitement"
   },
   {
     "key": "traitement_date_fin",
     "type": "string",
     "format": "date",
-    "title": "Date de fin"
+    "title": "Date de fin du traitement"
   }
 ]

@@ -35,7 +35,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
       schema: datasetSchema,
       extras: { processingId }
     })).data
-    await log.info('Le jeu a été créé')
+    await log.info('Le jeu de données a été créé')
     await log.debug('jeu de données créé', dataset)
   }
   const lastProcessedDays = dataset.extras.lastProcessedDays || {}
@@ -83,10 +83,9 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
     }
 
     for (const day of days) {
-      await log.info(`téléchargement du nouvel état au jour ${day}`)
       const state = await require('./lib/read-daily-state')(ftp, folder, day, log)
       const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day)
-      await log.info(`enregistrement des modifications dans le jeu de données : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
+      await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, bulk)
       lastProcessedDays[folder] = day
       await axios.patch(`api/v1/datasets/${dataset.id}`, {

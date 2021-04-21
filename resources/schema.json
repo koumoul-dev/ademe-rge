@@ -133,7 +133,8 @@
   {
     "key": "motif_insertion",
     "type": "string",
-    "title": "Motif d'insertion"
+    "title": "Motif d'insertion",
+    "separator": ";"
   },
   {
     "key": "traitement_termine",

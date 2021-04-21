@@ -129,5 +129,15 @@
     "type": "string",
     "format": "date",
     "title": "Date de fin du traitement"
+  },
+  {
+    "key": "motif_insertion",
+    "type": "string",
+    "title": "Motif d'insertion"
+  },
+  {
+    "key": "traitement_termine",
+    "type": "boolean",
+    "title": "Traitement terminé"
   }
 ]

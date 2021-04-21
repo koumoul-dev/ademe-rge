@@ -1,5 +1,11 @@
+// tell data-fair-processings to persist the data directory for this processing
+exports.preserveDir = true
 
-exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axios, log }) => {
+// main execution method
+exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios, log }) => {
+  const fs = require('fs-extra')
+  const path = require('path')
+
   const datasetSchema = require('./resources/schema.json')
   let dataset
 
@@ -38,7 +44,6 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
     await log.info('Le jeu de données a été créé')
     await log.debug('jeu de données créé', dataset)
   }
-  const lastProcessedDays = dataset.extras.lastProcessedDays || {}
 
   await log.step('Connexion au serveur FTP')
   const FTPClient = require('promise-ftp')
@@ -58,23 +63,31 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
   })
   await log.info('connecté : ' + serverMessage)
 
+  const { day2int, int2day, day2date } = require('./lib/format')
+  const { readHistoryData } = require('./lib/history')
+  const { readDailyState, clearFiles } = require('./lib/daily-state')
+
   for (const folder of processingConfig.folders) {
+    await fs.ensureDir(path.join(dir, folder))
     log.step(`Traitement du répertoire ${folder}`)
     await log.info('récupération de la liste des fichiers dans le répertoire ' + folder)
     const files = await ftp.list(ftpPath(folder))
     let days = Array.from(new Set(files.map(f => f.name.split('-').shift()).filter(f => f.length === 8 && !f.includes('.'))))
+      .map(day2date)
     days.sort()
     await log.info(`interval de jours dans les fichiers : début = ${days[0]}, fin = ${days[days.length - 1]}`)
 
+    const historyData = await readHistoryData(dir, folder)
     let previousState = {}
     let previousDay
-    if (lastProcessedDays[folder]) {
-      const nbProcessedDays = days.findIndex(d => d === lastProcessedDays[folder]) + 1
+    const lastProcessedDay = int2day(historyData.lastProcessedDay)
+    if (lastProcessedDay) {
+      const nbProcessedDays = days.findIndex(d => d === lastProcessedDay) + 1
       await log.info(`nombre de jours déjà traités : ${nbProcessedDays}`)
       days = days.slice(nbProcessedDays)
-      await log.info(`téléchargement de l'état au dernier jour traité ${lastProcessedDays[folder]}`)
-      previousState = await require('./lib/read-daily-state')(ftp, folder, lastProcessedDays[folder], log)
-      previousDay = lastProcessedDays[folder]
+      await log.info(`téléchargement de l'état au dernier jour traité ${lastProcessedDay}`)
+      previousState = await readDailyState(ftp, dir, folder, lastProcessedDay, log)
+      previousDay = lastProcessedDay
     }
 
     if (processingConfig.maxDays !== -1 && days.length > processingConfig.maxDays) {
@@ -83,16 +96,15 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, tmpDir, axi
     }
 
     for (const day of days) {
-      const state = await require('./lib/read-daily-state')(ftp, folder, day, log)
-      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day)
+      const state = await readDailyState(ftp, dir, folder, day, log)
+      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day, historyData)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, bulk)
-      lastProcessedDays[folder] = day
-      await axios.patch(`api/v1/datasets/${dataset.id}`, {
-        extras: { ...dataset.extras, lastProcessedDays }
-      })
+      if (previousDay) await clearFiles(dir, folder, previousDay, log)
       previousState = state
       previousDay = day
+      historyData.lastProcessedDay = day2int(previousDay)
+      await historyData.write()
     }
   }
 }

@@ -34,7 +34,7 @@ describe('Hello world processing', () => {
       error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
       return Promise.reject(error.response)
     })
-    await fs.emptyDir('data/tmp')
+    // await fs.emptyDir('data/')
     await ademeRGE.run({
       pluginConfig: {
         ftpOptions: config.ftpOptions
@@ -42,7 +42,7 @@ describe('Hello world processing', () => {
       processingConfig: {
         dataset: { id: 'historique-rge-test', title: 'Historique RGE test', overwrite: false },
         folders: ['qualifelec'],
-        maxDays: 10
+        maxDays: 2
       },
       processingId: 'test',
       axios: axiosInstance,
@@ -52,10 +52,10 @@ describe('Hello world processing', () => {
         warning: (msg, extra) => console.log(chalk.red(`[${moment().format('LTS')}] ${msg}`), extra),
         info: (msg, extra) => console.log(chalk.blue(`[${moment().format('LTS')}] ${msg}`), extra),
         debug: (msg, extra) => {
-          // console.log(`[${moment().format('LTS')}] ${msg}`, extra)
+          console.log(`[${moment().format('LTS')}] ${msg}`, extra)
         }
       },
-      tmpDir: 'data/tmp'
+      dir: 'data/'
     })
 
     /* const dataset = (await axiosInstance.get('api/v1/datasets/hello-world-test')).data

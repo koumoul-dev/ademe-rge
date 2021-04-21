@@ -19,7 +19,7 @@ describe('Hello world processing', () => {
   })
 
   it('should run a task', async function () {
-    this.timeout(120000)
+    this.timeout(240000)
 
     const axiosInstance = axios.create({
       baseURL: config.dataFairUrl,
@@ -42,7 +42,7 @@ describe('Hello world processing', () => {
       processingConfig: {
         dataset: { id: 'historique-rge-test', title: 'Historique RGE test', overwrite: false },
         folders: ['qualifelec'],
-        maxDays: 2
+        maxDays: 10
       },
       processingId: 'test',
       axios: axiosInstance,
@@ -52,7 +52,7 @@ describe('Hello world processing', () => {
         warning: (msg, extra) => console.log(chalk.red(`[${moment().format('LTS')}] ${msg}`), extra),
         info: (msg, extra) => console.log(chalk.blue(`[${moment().format('LTS')}] ${msg}`), extra),
         debug: (msg, extra) => {
-          console.log(`[${moment().format('LTS')}] ${msg}`, extra)
+          // console.log(`[${moment().format('LTS')}] ${msg}`, extra)
         }
       },
       dir: 'data/'

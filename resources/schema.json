@@ -119,18 +119,6 @@
     "title": "Travaille pour les particuliers"
   },
   {
-    "key": "traitement_date_debut",
-    "type": "string",
-    "format": "date",
-    "title": "Date de début du traitement"
-  },
-  {
-    "key": "traitement_date_fin",
-    "type": "string",
-    "format": "date",
-    "title": "Date de fin du traitement"
-  },
-  {
     "key": "motif_insertion",
     "type": "string",
     "title": "Motif d'insertion",

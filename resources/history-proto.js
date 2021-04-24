@@ -25,41 +25,9 @@ HistoryData._FieldEntry2.read = function (pbf, end) {
 };
 HistoryData._FieldEntry2._readField = function (tag, obj, pbf) {
     if (tag === 1) obj.key = pbf.readString();
-    else if (tag === 2) obj.value = HistoryRecordArray.read(pbf, pbf.readVarint() + pbf.pos);
+    else if (tag === 2) obj.value =  pbf.readVarint();
 };
 HistoryData._FieldEntry2.write = function (obj, pbf) {
     if (obj.key) pbf.writeStringField(1, obj.key);
-    if (obj.value) pbf.writeMessage(2, HistoryRecordArray.write, obj.value);
-};
-
-// HistoryRecordArray ========================================
-
-var HistoryRecordArray = exports.HistoryRecordArray = {};
-
-HistoryRecordArray.read = function (pbf, end) {
-    return pbf.readFields(HistoryRecordArray._readField, {records: []}, end);
-};
-HistoryRecordArray._readField = function (tag, obj, pbf) {
-    if (tag === 1) obj.records.push(HistoryRecord.read(pbf, pbf.readVarint() + pbf.pos));
-};
-HistoryRecordArray.write = function (obj, pbf) {
-    if (obj.records) for (var i = 0; i < obj.records.length; i++) pbf.writeMessage(1, HistoryRecord.write, obj.records[i]);
-};
-
-// HistoryRecord ========================================
-
-var HistoryRecord = exports.HistoryRecord = {};
-
-HistoryRecord.read = function (pbf, end) {
-    return pbf.readFields(HistoryRecord._readField, {date_debut: 0, traitement_date_debut: 0, traitement_date_fin: 0}, end);
-};
-HistoryRecord._readField = function (tag, obj, pbf) {
-    if (tag === 1) obj.date_debut = pbf.readVarint();
-    else if (tag === 2) obj.traitement_date_debut = pbf.readVarint();
-    else if (tag === 3) obj.traitement_date_fin = pbf.readVarint();
-};
-HistoryRecord.write = function (obj, pbf) {
-    if (obj.date_debut) pbf.writeVarintField(1, obj.date_debut);
-    if (obj.traitement_date_debut) pbf.writeVarintField(2, obj.traitement_date_debut);
-    if (obj.traitement_date_fin) pbf.writeVarintField(3, obj.traitement_date_fin);
+    if (obj.value)  pbf.writeVarintField(2, obj.value);
 };

@@ -4,15 +4,5 @@ package ademerge;
 
 message HistoryData {
   uint32 lastProcessedDay = 1;
-  map<string, HistoryRecordArray> map = 2;
-}
-
-message HistoryRecordArray {
-  repeated HistoryRecord records = 1;
-}
-
-message HistoryRecord {
-  uint32 date_debut = 1;
-  uint32 traitement_date_debut = 2;
-  uint32 traitement_date_fin = 3;
+  map<string, uint32> map = 2;
 }

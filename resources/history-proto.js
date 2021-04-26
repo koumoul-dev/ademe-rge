@@ -21,13 +21,13 @@ HistoryData.write = function (obj, pbf) {
 HistoryData._FieldEntry2 = {};
 
 HistoryData._FieldEntry2.read = function (pbf, end) {
-    return pbf.readFields(HistoryData._FieldEntry2._readField, {key: "", value: null}, end);
+    return pbf.readFields(HistoryData._FieldEntry2._readField, {key: "", value: 0}, end);
 };
 HistoryData._FieldEntry2._readField = function (tag, obj, pbf) {
     if (tag === 1) obj.key = pbf.readString();
-    else if (tag === 2) obj.value =  pbf.readVarint();
+    else if (tag === 2) obj.value = pbf.readVarint();
 };
 HistoryData._FieldEntry2.write = function (obj, pbf) {
     if (obj.key) pbf.writeStringField(1, obj.key);
-    if (obj.value)  pbf.writeVarintField(2, obj.value);
+    if (obj.value) pbf.writeVarintField(2, obj.value);
 };

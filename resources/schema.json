@@ -88,6 +88,18 @@
     "title": "Date de fin"
   },
   {
+    "key": "lien_date_debut",
+    "type": "string",
+    "format": "date",
+    "title": "Date de début (lien qualification)"
+  },
+  {
+    "key": "lien_date_fin",
+    "type": "string",
+    "format": "date",
+    "title": "Date de fin (lien qualification)"
+  },
+  {
     "key": "url_qualification",
     "type": "string",
     "x-refersTo": "https://schema.org/WebPage",

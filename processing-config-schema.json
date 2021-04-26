@@ -1,31 +1,59 @@
 {
   "type": "object",
-  "required": ["dataset"],
-  "properties": {
-    "dataset": {
-      "type": "object",
-      "require": ["id", "title"],
+  "required": ["datasetMode"],
+  "allOf": [{
+    "title": "Jeu de données",
+    "oneOf": [{
+      "title": "Créer un jeu de données",
+      "required": ["dataset"],
       "properties": {
-        "id": { "type": "string", "title": "Identifiant du jeu de données", "default": "historique-rge" },
-        "title": { "type": "string", "title": "Titre du jeu de données", "default": "Historique RGE" },
-        "overwrite": { "type": "boolean", "title": "Surcharger un jeu de données existant", "default": false }
+        "datasetMode": { "type": "string", "const": "create", "title": "Action" },
+        "dataset": {
+          "type": "object",
+          "required": ["title"],
+          "properties": {
+            "id": {"type": "string", "title": "Identifiant (laissez vide pour calculer un identifiant à partir du titre)"},
+            "title": {"type": "string", "title": "Titre", "default": "Historique RGE"}
+          }
+        }
       }
-    },
-    "folders": {
-      "type": "array",
-      "title": "Répertoires",
-      "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"],
-      "items": {
-        "type": "string",
-        "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"]
+    }, {
+      "title": "Mettre à jour un jeu de données",
+      "required": ["dataset"],
+      "properties": {
+        "datasetMode": { "type": "string", "const": "update" },
+        "dataset": {
+          "type": "object",
+          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "href",
+          "properties": {
+            "id": {"type": "string", "title": "Identifiant"},
+            "title": {"type": "string", "title": "Titre"}
+          }
+        }
       }
-    },
-    "maxDays": {
-      "type": "number",
-      "title": "Nombre maximum de jours",
-      "default": -1,
-      "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
-      "minimum": -1
+    }]
+  }, {
+    "title": "Paramètres",
+    "properties": {
+      "folders": {
+        "type": "array",
+        "title": "Répertoires",
+        "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"],
+        "items": {
+          "type": "string",
+          "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"]
+        }
+      },
+      "maxDays": {
+        "type": "number",
+        "title": "Nombre maximum de jours",
+        "default": -1,
+        "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
+        "minimum": -1
+      }
     }
-  }
+  }]
 }

@@ -1,5 +1,6 @@
 {
   "type": "object",
+  "x-display": "tabs",
   "required": ["datasetMode"],
   "allOf": [{
     "title": "Jeu de données",

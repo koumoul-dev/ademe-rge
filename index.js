@@ -1,6 +1,3 @@
-// tell data-fair-processings to persist the data directory for this processing
-exports.preserveDir = true
-
 // main execution method
 exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios, log, patchConfig }) => {
   const fs = require('fs-extra')

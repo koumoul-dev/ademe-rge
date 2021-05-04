@@ -40,9 +40,10 @@ describe('Hello world processing', () => {
         ftpOptions: config.ftpOptions
       },
       processingConfig: {
-        dataset: { id: 'historique-rge-test', title: 'Historique RGE test', overwrite: false },
+        datasetMode: 'create',
+        dataset: { title: 'Historique RGE test' },
         folders: ['qualifelec'],
-        maxDays: 10
+        maxDays: -1
       },
       processingId: 'test',
       axios: axiosInstance,
@@ -55,7 +56,11 @@ describe('Hello world processing', () => {
           // console.log(`[${moment().format('LTS')}] ${msg}`, extra)
         }
       },
-      dir: 'data/'
+      dir: 'data/',
+      patchConfig: async (patch) => {
+        console.log('received config patch', patch)
+        // Object.assign(processingConfig, patch)
+      }
     })
 
     /* const dataset = (await axiosInstance.get('api/v1/datasets/hello-world-test')).data

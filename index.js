@@ -45,6 +45,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const { day2int, int2day, day2date } = require('./lib/format')
   const { readHistoryData } = require('./lib/history')
   const { readDailyState, clearFiles } = require('./lib/daily-state')
+  const repairDomains = require('./lib/repair-domains')
 
   for (const folder of processingConfig.folders) {
     await fs.ensureDir(path.join(dir, folder))
@@ -88,6 +89,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       previousDay = day
     }
   }
+  await repairDomains(axios, dataset, log)
 }
 
 const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`

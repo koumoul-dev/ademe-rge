@@ -18,8 +18,8 @@ describe('Hello world processing', () => {
     assert.ok(schema)
   })
 
-  it('should run a task', async function () {
-    this.timeout(240000)
+  it.only('should run a task', async function () {
+    this.timeout(2400000)
 
     const axiosInstance = axios.create({
       baseURL: config.dataFairUrl,
@@ -41,7 +41,7 @@ describe('Hello world processing', () => {
       },
       processingConfig: {
         datasetMode: 'create',
-        dataset: { title: 'Historique RGE test' },
+        dataset: { title: 'Historique RGE test 2', overwrite: false },
         folders: ['qualifelec'],
         maxDays: -1
       },

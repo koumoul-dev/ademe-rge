@@ -22,6 +22,15 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     dataset = (await axios.get(`api/v1/datasets/${processingConfig.dataset.id}`)).data
     if (!dataset) throw new Error(`le jeu de données n'existe pas, id${processingConfig.dataset.id}`)
     await log.info(`le jeu de donnée existe, id="${dataset.id}", title="${dataset.title}"`)
+  } else if (processingConfig.datasetMode === 'clean_update') {
+    await log.step('Vérification du jeu de données')
+    dataset = (await axios.get(`api/v1/datasets/${processingConfig.dataset.id}`)).data
+    if (!dataset) throw new Error(`le jeu de données n'existe pas, id${processingConfig.dataset.id}`)
+    await log.info(`le jeu de donnée existe, id="${dataset.id}", title="${dataset.title}"`)
+    await axios.delete(`api/v1/datasets/${processingConfig.dataset.id}/lines`)
+    await log.info('le jeu de donnée a été vidé de ses données')
+    await fs.remove(dir)
+    await log.info('le répertoire de travail a été vidé de ses données')
   }
 
   await log.step('Connexion au serveur FTP')

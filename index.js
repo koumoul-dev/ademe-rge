@@ -89,7 +89,9 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day, historyData)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       while (bulk.length) {
-        await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, bulk.splice(0, 1000))
+        const lines = bulk.splice(0, 1000)
+        const res = await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, lines)
+        if (res.data.nbErrors) log.error(`${res.data.nbErrors} échecs sur ${lines.length} lignes à insérer`, res.data.errors)
       }
       historyData.lastProcessedDay = day2int(day)
       await historyData.write()

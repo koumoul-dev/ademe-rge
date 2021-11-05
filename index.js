@@ -3,9 +3,50 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const fs = require('fs-extra')
   const path = require('path')
 
+  await log.step('Connexion au serveur FTP')
+  const FTPClient = require('promise-ftp')
+  const ftp = new FTPClient()
+  const serverMessage = await ftp.connect({
+    ftpOptions: {
+      host: 'localhost',
+      port: 21,
+      user: undefined,
+      password: undefined,
+      connTimeout: 30000,
+      pasvTimeout: 30000,
+      keepalive: 30000,
+      autoReconnect: true
+    },
+    ...pluginConfig.ftpOptions
+  })
+  await log.info('connecté : ' + serverMessage)
+
+  // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
+  const { downloadAndValidate, moveToFtp } = require('./lib/import-validate')
+  log.step('Import et validation des données des organismes')
+  await log.info('récupération de la liste des fichiers dans le répertoire')
+  const files = await ftp.list(ftpPath(''))
+  for (const folder of processingConfig.folders) {
+    const tars = files.map(f => f.name).filter(f => f.startsWith(folder) && f.endsWith('.tar.gz'))
+    for (const tar of tars) {
+      const day = tar.replace(folder, '').replace('.tar.gz', '')
+      if (day.length !== 8) {
+        await log.error(`le fichier archive devrait avoir un nom de la forme ${folder}DATE.tar.gz ou la date est écrite sur 8 caractères (exemple 20180318). Au lieu de ça le fichier est nommé ${tar}.`)
+        continue
+      }
+      const errors = await downloadAndValidate(ftp, dir, folder, day, tar, log)
+      // TODO: send mail to contact with errors
+      await moveToFtp(ftp, dir, folder, day, !!errors.length, tar, log)
+    }
+  }
+
+  await log.step('Récupération des données de référence liées')
+  const qualifDomaineLines = (await axios.get('https://koumoul.com/data-fair/api/v1/datasets/rge-lien-domaine-qualification/lines', { params: { size: 10000 } })).data.results
+  const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
+  await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "RGE - Lien domaine qualification"`)
+
   const datasetSchema = require('./resources/schema.json')
   let dataset
-
   if (processingConfig.datasetMode === 'create') {
     await log.step('Création du jeu de données')
     dataset = (await axios.post('api/v1/datasets', {
@@ -33,39 +74,16 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     await log.info('le répertoire de travail a été vidé de ses données')
   }
 
-  await log.step('Connexion au serveur FTP')
-  const FTPClient = require('promise-ftp')
-  const ftp = new FTPClient()
-  const serverMessage = await ftp.connect({
-    ftpOptions: {
-      host: 'localhost',
-      port: 21,
-      user: undefined,
-      password: undefined,
-      connTimeout: 30000,
-      pasvTimeout: 30000,
-      keepalive: 30000,
-      autoReconnect: true
-    },
-    ...pluginConfig.ftpOptions
-  })
-  await log.info('connecté : ' + serverMessage)
-
-  await log.step('Récupération des données de référence associées')
-  const qualifDomaineLines = (await axios.get('https://koumoul.com/data-fair/api/v1/datasets/rge-lien-domaine-qualification/lines', { params: { size: 10000 } })).data.results
-  const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
-  await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "RGE - Lien domaine qualification"`)
-
+  // read files in folder/archive and calculate history
   const { day2int, int2day, day2date } = require('./lib/format')
   const { readHistoryData } = require('./lib/history')
   const { readDailyState, clearFiles } = require('./lib/daily-state')
   const repairDomains = require('./lib/repair-domains')
-
   for (const folder of processingConfig.folders) {
-    await fs.ensureDir(path.join(dir, folder))
     log.step(`Traitement du répertoire ${folder}`)
-    await log.info('récupération de la liste des fichiers dans le répertoire ' + folder)
-    const files = await ftp.list(ftpPath(folder))
+    await fs.ensureDir(path.join(dir, folder))
+    await log.info(`récupération de la liste des fichiers dans le répertoire ${folder}/archive`)
+    const files = await ftp.list(ftpPath(folder + '/archive'))
     let days = Array.from(new Set(files.map(f => f.name.split('-').shift()).filter(f => f.length === 8 && !f.includes('.'))))
       .map(day2date)
     days.sort()
@@ -108,4 +126,4 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   await repairDomains(axios, dataset, qualifDomaine, log)
 }
 
-const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`
+const ftpPath = (folder) => `/www/sites/default/files/private/${folder}`

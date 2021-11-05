@@ -51,6 +51,11 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   })
   await log.info('connecté : ' + serverMessage)
 
+  await log.step('Récupération des données de référence associées')
+  const qualifDomaineLines = (await axios.get('https://koumoul.com/data-fair/api/v1/datasets/rge-lien-domaine-qualification/lines', { params: { size: 10000 } })).data.results
+  const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
+  await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "RGE - Lien domaine qualification"`)
+
   const { day2int, int2day, day2date } = require('./lib/format')
   const { readHistoryData } = require('./lib/history')
   const { readDailyState, clearFiles } = require('./lib/daily-state')
@@ -75,7 +80,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       await log.info(`nombre de jours déjà traités : ${nbProcessedDays}`)
       days = days.slice(nbProcessedDays)
       await log.info(`téléchargement de l'état au dernier jour traité ${lastProcessedDay}`)
-      previousState = await readDailyState(ftp, dir, folder, lastProcessedDay, log)
+      previousState = await readDailyState(ftp, dir, folder, lastProcessedDay, qualifDomaine, log)
       previousDay = lastProcessedDay
     }
 
@@ -85,7 +90,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     }
 
     for (const day of days) {
-      const state = await readDailyState(ftp, dir, folder, day, log)
+      const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, log)
       const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day, historyData)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       while (bulk.length) {
@@ -100,7 +105,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       previousDay = day
     }
   }
-  await repairDomains(axios, dataset, log)
+  await repairDomains(axios, dataset, qualifDomaine, log)
 }
 
 const ftpPath = (folder) => `/www/sites/default/files/private/${folder}/archive`

@@ -21,12 +21,23 @@ describe('Hello world processing', () => {
   it.only('should run a task', async function () {
     this.timeout(2400000)
 
+    const headers = { 'x-apiKey': config.dataFairAPIKey }
     const axiosInstance = axios.create({
-      baseURL: config.dataFairUrl,
-      headers: { 'x-apiKey': config.dataFairAPIKey },
+      // baseURL: config.dataFairUrl,
+      // headers,
       maxContentLength: Infinity,
       maxBodyLength: Infinity
     })
+    // apply default base url and send api key when relevant
+    axiosInstance.interceptors.request.use(cfg => {
+      if (!/^https?:\/\//i.test(cfg.url)) {
+        if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
+        else cfg.url = config.dataFairUrl + '/' + cfg.url
+      }
+      if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+      return cfg
+    }, error => Promise.reject(error))
+
     // customize axios errors for shorter stack traces when a request fails
     axiosInstance.interceptors.response.use(response => response, error => {
       if (!error.response) return Promise.reject(error)
@@ -41,7 +52,7 @@ describe('Hello world processing', () => {
       },
       processingConfig: {
         datasetMode: 'create',
-        dataset: { title: 'Historique RGE test 2', overwrite: false },
+        dataset: { title: 'Historique RGE test 2' },
         folders: ['qualifelec'],
         maxDays: -1
       },

@@ -23,20 +23,17 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
 
   // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
   const { downloadAndValidate, moveToFtp } = require('./lib/import-validate')
-  log.step('Import et validation des données des organismes')
-  await log.info('récupération de la liste des fichiers dans le répertoire')
-  const files = await ftp.list(ftpPath(''))
   for (const folder of processingConfig.folders) {
-    const tars = files.map(f => f.name).filter(f => f.startsWith(folder) && f.endsWith('.tar.gz'))
-    for (const tar of tars) {
-      const day = tar.replace(folder, '').replace('.tar.gz', '')
-      if (day.length !== 8) {
-        await log.error(`le fichier archive devrait avoir un nom de la forme ${folder}DATE.tar.gz ou la date est écrite sur 8 caractères (exemple 20180318). Au lieu de ça le fichier est nommé ${tar}.`)
-        continue
-      }
-      const errors = await downloadAndValidate(ftp, dir, folder, day, tar, log)
+    log.step(`Import et validation du répertoire ${folder}`)
+    await log.info('récupération de la liste des fichiers dans le répertoire')
+    const files = await ftp.list(ftpPath(folder))
+    const csvs = files.map(f => f.name).filter(f => f.endsWith('.csv'))
+    if (csvs.length) {
+      const errors = await downloadAndValidate(ftp, dir, folder, csvs, log)
       // TODO: send mail to contact with errors
-      await moveToFtp(ftp, dir, folder, day, !!errors.length, tar, log)
+      await moveToFtp(ftp, dir, folder, !!errors.length, log)
+    } else {
+      await log.info('aucun fichier à importer')
     }
   }
 

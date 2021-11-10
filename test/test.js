@@ -54,7 +54,9 @@ describe('Hello world processing', () => {
         datasetMode: 'create',
         dataset: { title: 'Historique RGE test 2' },
         folders: ['qualifelec'],
-        maxDays: -1
+        maxDays: 2,
+        datasetLienDomaineQualif: { id: 'rge-lien-domaine-qualification', title: 'RGE - Lien domaine qualification' },
+        datasetContactsOrganismes: { id: 'contacts-organismes', title: 'RGE - Contacts organismes' }
       },
       processingId: 'test',
       axios: axiosInstance,
@@ -71,6 +73,9 @@ describe('Hello world processing', () => {
       patchConfig: async (patch) => {
         console.log('received config patch', patch)
         // Object.assign(processingConfig, patch)
+      },
+      sendMail: async (data) => {
+        console.log('send mail', data)
       }
     })
 

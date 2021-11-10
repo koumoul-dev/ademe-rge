@@ -1,5 +1,5 @@
 // main execution method
-exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios, log, patchConfig }) => {
+exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios, log, patchConfig, sendMail }) => {
   const fs = require('fs-extra')
   const path = require('path')
 
@@ -21,8 +21,18 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   })
   await log.info('connecté : ' + serverMessage)
 
+  await log.step('Récupération des données de référence liées')
+  if (!processingConfig.datasetLienDomaineQualif) throw new Error('La configuration ne contient pas de lien vers un jeu de données "Historique RGE"')
+  const qualifDomaineLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetLienDomaineQualif.id}/lines`, { params: { size: 10000 } })).data.results
+  const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
+  await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "${processingConfig.datasetLienDomaineQualif.title}"`)
+  if (!processingConfig.datasetContactsOrganismes) throw new Error('La configuration ne contient pas de lien vers un jeu de données "Contacts organismes"')
+  const contactsOrganismesLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetContactsOrganismes.id}/lines`, { params: { size: 10000 } })).data.results
+  const contactsOrganismes = contactsOrganismesLines.reduce((a, ca) => { a[ca.ORGANISME] = ca; return a }, {})
+  await log.info(`${contactsOrganismesLines.length} lignes dans les données de référence "${processingConfig.datasetContactsOrganismes.title}"`)
+
   // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
-  const { downloadAndValidate, moveToFtp } = require('./lib/import-validate')
+  const { downloadAndValidate, moveToFtp, sendValidationErrors } = require('./lib/import-validate')
   for (const folder of processingConfig.folders) {
     log.step(`Import et validation du répertoire ${folder}`)
     await log.info('récupération de la liste des fichiers dans le répertoire')
@@ -30,17 +40,14 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     const csvs = files.map(f => f.name).filter(f => f.endsWith('.csv'))
     if (csvs.length) {
       const errors = await downloadAndValidate(ftp, dir, folder, csvs, log)
-      // TODO: send mail to contact with errors
+      if (errors.length) {
+        await sendValidationErrors(folder, contactsOrganismes, errors, log, sendMail)
+      }
       await moveToFtp(ftp, dir, folder, !!errors.length, log)
     } else {
       await log.info('aucun fichier à importer')
     }
   }
-
-  await log.step('Récupération des données de référence liées')
-  const qualifDomaineLines = (await axios.get('https://koumoul.com/data-fair/api/v1/datasets/rge-lien-domaine-qualification/lines', { params: { size: 10000 } })).data.results
-  const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
-  await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "RGE - Lien domaine qualification"`)
 
   const datasetSchema = require('./resources/schema.json')
   let dataset

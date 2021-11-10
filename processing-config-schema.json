@@ -1,7 +1,7 @@
 {
   "type": "object",
   "x-display": "tabs",
-  "required": ["datasetMode"],
+  "required": ["datasetMode", "datasetLienDomaineQualif", "datasetContactsOrganismes"],
   "allOf": [{
     "title": "Jeu de données",
     "oneOf": [{
@@ -56,6 +56,30 @@
   }, {
     "title": "Paramètres",
     "properties": {
+      "datasetLienDomaineQualif": {
+        "title": "Jeu de données de référence - Historique RGE",
+        "type": "object",
+        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+        "x-itemsProp": "results",
+        "x-itemTitle": "title",
+        "x-itemKey": "id",
+        "properties": {
+          "id": {"type": "string", "title": "Identifiant"},
+          "title": {"type": "string", "title": "Titre"}
+        }
+      },
+      "datasetContactsOrganismes": {
+        "title": "Jeu de données de référence - Contacts organismes",
+        "type": "object",
+        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+        "x-itemsProp": "results",
+        "x-itemTitle": "title",
+        "x-itemKey": "id",
+        "properties": {
+          "id": {"type": "string", "title": "Identifiant"},
+          "title": {"type": "string", "title": "Titre"}
+        }
+      },
       "folders": {
         "type": "array",
         "title": "Répertoires",

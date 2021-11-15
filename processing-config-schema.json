@@ -57,7 +57,7 @@
     "title": "Paramètres",
     "properties": {
       "datasetLienDomaineQualif": {
-        "title": "Jeu de données de référence - Historique RGE",
+        "title": "Jeu de données de référence - Lien domaine qualification",
         "type": "object",
         "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
         "x-itemsProp": "results",

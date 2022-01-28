@@ -30,7 +30,10 @@ git push && git push --tags
 To publish a test version, use prerelease versioning with a "test" npm tag:
 
 ```
+# new prerelease
 npm version preminor --preid=beta
+# increment prerelease
+npm version prerelease --preid=beta
 npm publish --tag=test
 git push && git push --tags
 ```

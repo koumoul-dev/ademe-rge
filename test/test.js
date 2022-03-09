@@ -3,9 +3,9 @@ const config = require('config')
 const axios = require('axios')
 const chalk = require('chalk')
 const moment = require('moment')
-const fs = require('fs-extra')
+// const fs = require('fs-extra')
 const assert = require('assert').strict
-const ademeRGE = require('../')
+const ademeRGE = require('./download-validate')
 
 describe('Hello world processing', () => {
   it('should expose a plugin config schema for super admins', async () => {
@@ -52,7 +52,10 @@ describe('Hello world processing', () => {
       },
       processingConfig: {
         datasetMode: 'create',
-        dataset: { title: 'Historique RGE test 2' },
+
+        dataset: { title: 'Historique RGE test 3', overwrite: false },
+        // datasetMode: 'update',
+        // dataset: { id: 'historique-rge-test-2-2', title: 'Historique RGE test 2', overwrite: false },
         folders: ['qualifelec'],
         maxDays: 2,
         datasetLienDomaineQualif: { id: 'rge-lien-domaine-qualification', title: 'RGE - Lien domaine qualification' },

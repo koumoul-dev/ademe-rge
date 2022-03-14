@@ -10,6 +10,11 @@
         "user": {"type": "string", "title": "Utilisateur"},
         "password": {"type": "string", "title": "Mot de passe", "x-props": {"type": "password"}}
       }
+    },
+    "ftpBasePath": {
+      "type": "string",
+      "title": "Chemin de base des données",
+      "default": "/www/sites/default/files/private/"
     }
   }
 }

@@ -5,6 +5,7 @@ module.exports = {
     user: '',
     password: ''
   },
+  ftpBasePath: '/www/sites/default/files/private/',
   dataFairUrl: '',
   dataFairAPIKey: ''
 }

@@ -80,6 +80,18 @@
           "title": {"type": "string", "title": "Titre"}
         }
       },
+      "datasetLandingZone": {
+        "title": "Jeu de données de dépôt des données",
+        "type": "object",
+        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+        "x-itemsProp": "results",
+        "x-itemTitle": "title",
+        "x-itemKey": "id",
+        "properties": {
+          "id": {"type": "string", "title": "Identifiant"},
+          "title": {"type": "string", "title": "Titre"}
+        }
+      },
       "folders": {
         "type": "array",
         "title": "Répertoires",

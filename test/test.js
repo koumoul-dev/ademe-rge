@@ -48,7 +48,8 @@ describe('Hello world processing', () => {
     // await fs.emptyDir('data/')
     await ademeRGE.run({
       pluginConfig: {
-        ftpOptions: config.ftpOptions
+        ftpOptions: config.ftpOptions,
+        ftpBasePath: config.ftpBasePath
       },
       processingConfig: {
         datasetMode: 'create',

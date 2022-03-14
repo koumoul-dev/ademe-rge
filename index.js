@@ -7,18 +7,16 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const FTPClient = require('promise-ftp')
   const ftp = new FTPClient()
   const serverMessage = await ftp.connect({
-    ftpOptions: {
-      host: 'localhost',
-      port: 21,
-      user: undefined,
-      password: undefined,
-      connTimeout: 30000,
-      pasvTimeout: 30000,
-      keepalive: 30000,
-      autoReconnect: true
-    },
+    host: 'localhost',
+    port: 21,
+    user: undefined,
+    password: undefined,
+    connTimeout: 30000,
+    pasvTimeout: 30000,
+    autoReconnect: true,
     ...pluginConfig.ftpOptions
   })
+  pluginConfig.ftpBasePath = pluginConfig.ftpBasePath || '/www/sites/default/files/private/'
   await log.info('connecté : ' + serverMessage)
 
   await log.step('Récupération des données de référence liées')
@@ -30,20 +28,25 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const contactsOrganismesLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetContactsOrganismes.id}/lines`, { params: { size: 10000 } })).data.results
   const contactsOrganismes = contactsOrganismesLines.reduce((a, ca) => { a[ca.ORGANISME] = ca; return a }, {})
   await log.info(`${contactsOrganismesLines.length} lignes dans les données de référence "${processingConfig.datasetContactsOrganismes.title}"`)
+  if (processingConfig.datasetLandingZone) {
+    await log.info(`synchronisation des fichers déposés sur le jeu de données "${processingConfig.datasetLandingZone.title}"`)
+    await axios.post(`api/v1/datasets/${processingConfig.datasetLandingZone.id}/_sync_attachments_lines`)
+  }
 
   // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
   const { downloadAndValidate, moveToFtp, sendValidationErrors } = require('./lib/import-validate')
   for (const folder of processingConfig.folders) {
     log.step(`Import et validation du répertoire ${folder}`)
     await log.info('récupération de la liste des fichiers dans le répertoire')
-    const files = await ftp.list(ftpPath(folder))
+    console.log(pluginConfig)
+    const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder))
     const csvs = files.map(f => f.name).filter(f => f.endsWith('.csv'))
     if (csvs.length) {
-      const errors = await downloadAndValidate(ftp, dir, folder, csvs, log)
+      const errors = await downloadAndValidate(ftp, dir, folder, csvs, pluginConfig.ftpBasePath, log)
       if (errors.length) {
         await sendValidationErrors(folder, contactsOrganismes, errors, log, sendMail)
       }
-      await moveToFtp(ftp, dir, folder, !!errors.length, log)
+      await moveToFtp(ftp, dir, folder, !!errors.length, pluginConfig.ftpBasePath, log)
     } else {
       await log.info('aucun fichier à importer')
     }
@@ -87,7 +90,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     log.step(`Traitement du répertoire ${folder}`)
     await fs.ensureDir(path.join(dir, folder))
     await log.info(`récupération de la liste des fichiers dans le répertoire ${folder}/archive`)
-    const files = await ftp.list(ftpPath(folder + '/archive'))
+    const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder, '/archive'))
     let days = Array.from(new Set(files.map(f => f.name.split('-').shift()).filter(f => f.length === 8 && !f.includes('.'))))
       .map(day2date)
     days.sort()
@@ -102,7 +105,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       await log.info(`nombre de jours déjà traités : ${nbProcessedDays}`)
       days = days.slice(nbProcessedDays)
       await log.info(`téléchargement de l'état au dernier jour traité ${lastProcessedDay}`)
-      previousState = await readDailyState(ftp, dir, folder, lastProcessedDay, qualifDomaine, log)
+      previousState = await readDailyState(ftp, dir, folder, lastProcessedDay, qualifDomaine, pluginConfig.ftpBasePath, log)
       previousDay = lastProcessedDay
     }
 
@@ -112,7 +115,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     }
 
     for (const day of days) {
-      const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, log)
+      const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, pluginConfig.ftpBasePath, log)
       const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day, historyData)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       while (bulk.length) {
@@ -128,6 +131,9 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     }
   }
   await repairDomains(axios, dataset, qualifDomaine, log)
-}
 
-const ftpPath = (folder) => `/www/sites/default/files/private/${folder}`
+  if (processingConfig.datasetLandingZone) {
+    await log.info(`synchronisation des fichers déposés sur le jeu de données "${processingConfig.datasetLandingZone.title}"`)
+    await axios.post(`api/v1/datasets/${processingConfig.datasetLandingZone.id}/_sync_attachments_lines`)
+  }
+}

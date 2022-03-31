@@ -53,7 +53,6 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   for (const folder of processingConfig.folders) {
     await log.step(`Synchronisation avec le ftp historique pour le répertoire ${folder}`)
     await syncOldFolder(oldFTP, ftp, pluginConfig.ftpBasePath, folder, log)
-    return
 
     await log.step(`Import et validation du répertoire ${folder}`)
     await log.info('récupération de la liste des fichiers dans le répertoire')

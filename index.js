@@ -58,7 +58,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     await log.info('récupération de la liste des fichiers dans le répertoire')
 
     const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder))
-    const csvs = files.map(f => f.name).filter(f => f.endsWith('.csv'))
+    const csvs = files.map(f => f.name).filter(f => ['entreprises.csv', 'qualifications.csv', 'liens.csv'].includes(f))
     if (csvs.length) {
       const errors = await downloadAndValidate(ftp, dir, folder, csvs, pluginConfig.ftpBasePath, log)
       if (errors.length) {

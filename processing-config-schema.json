@@ -95,10 +95,10 @@
       "folders": {
         "type": "array",
         "title": "Répertoires",
-        "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"],
+        "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc","cerqual"],
         "items": {
           "type": "string",
-          "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc"]
+          "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc","cerqual"]
         }
       },
       "maxDays": {

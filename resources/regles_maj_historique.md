@@ -38,4 +38,4 @@ Dans ces cas là, les lignes courantes d'historique sont mises à jour de la fa�
 
 ### Cas particulier Modification uniquement de la date de fin de lien
 
- * Mise à jour de la ligne courante (date_fin = NULL) avec lien_date_fin = date transmise.
+ * Mise à jour de la ligne courante (date_fin = NULL) avec lien_date_debut et lien_date_fin = dates transmises

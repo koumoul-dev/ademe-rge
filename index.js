@@ -134,7 +134,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
 
     for (const day of days) {
       const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, pluginConfig.ftpBasePath, log)
-      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, previousDay, day, historyData)
+      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, day, historyData, processingConfig)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
       while (bulk.length) {
         const lines = bulk.splice(0, 1000)

@@ -107,6 +107,11 @@
         "default": -1,
         "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
         "minimum": -1
+      },
+      "forceLinkDatesUpdate": {
+        "type": "boolean",
+        "title": "Forcer la mise à jour des dates de lien",
+        "default": false
       }
     }
   }]

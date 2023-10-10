@@ -19,20 +19,6 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   pluginConfig.ftpBasePath = pluginConfig.ftpBasePath || '/www/sites/default/files/private/'
   await log.info('connecté : ' + serverMessage)
 
-  await log.step('Connexion au serveur FTP historique')
-  const oldFTP = new FTPClient()
-  const oldServerMessage = await oldFTP.connect({
-    host: 'localhost',
-    port: 21,
-    user: undefined,
-    password: undefined,
-    connTimeout: 30000,
-    pasvTimeout: 30000,
-    autoReconnect: true,
-    ...pluginConfig.oldFTPOptions
-  })
-  await log.info('connecté : ' + oldServerMessage)
-
   await log.step('Récupération des données de référence liées')
   if (!processingConfig.datasetLienDomaineQualif) throw new Error('La configuration ne contient pas de lien vers un jeu de données "Historique RGE"')
   const qualifDomaineLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetLienDomaineQualif.id}/lines`, { params: { size: 10000 } })).data.results
@@ -49,11 +35,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
 
   // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
   const { downloadAndValidate, moveToFtp, sendValidationErrors } = require('./lib/import-validate')
-  const { syncOldFolder } = require('./lib/old-ftp')
   for (const folder of processingConfig.folders) {
-    await log.step(`Synchronisation avec le ftp historique pour le répertoire ${folder}`)
-    await syncOldFolder(oldFTP, ftp, pluginConfig.ftpBasePath, folder, log)
-
     await log.step(`Import et validation du répertoire ${folder}`)
     await log.info('récupération de la liste des fichiers dans le répertoire')
 

@@ -52,6 +52,11 @@
           }
         }
       }
+    }, {
+      "title": "Vérifier les données chargées",
+      "properties": {
+        "datasetMode": { "type": "string", "const": "check" }
+      }
     }]
   }, {
     "title": "Paramètres",

@@ -42,7 +42,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const contactsOrganismesLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetContactsOrganismes.id}/lines`, { params: { size: 10000 } })).data.results
   const contactsOrganismes = contactsOrganismesLines.reduce((a, ca) => { a[ca.ORGANISME] = ca; return a }, {})
   await log.info(`${contactsOrganismesLines.length} lignes dans les données de référence "${processingConfig.datasetContactsOrganismes.title}"`)
-  if (processingConfig.datasetLandingZone) {
+  if (processingConfig.datasetLandingZone && processingConfig.datasetMode !== 'check') {
     await log.info(`synchronisation des fichers déposés sur le jeu de données "${processingConfig.datasetLandingZone.title}"`)
     await axios.post(`api/v1/datasets/${processingConfig.datasetLandingZone.id}/_sync_attachments_lines`)
   }
@@ -61,10 +61,12 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     const csvs = files.map(f => f.name).filter(f => ['entreprises.csv', 'qualifications.csv', 'liens.csv'].includes(f))
     if (csvs.length) {
       const errors = await downloadAndValidate(ftp, dir, folder, csvs, pluginConfig.ftpBasePath, log)
-      if (errors.length) {
+      if (errors.length && processingConfig.datasetMode !== 'check') {
         await sendValidationErrors(folder, contactsOrganismes, errors, log, sendMail)
       }
-      await moveToFtp(ftp, dir, folder, !!errors.length, pluginConfig.ftpBasePath, log)
+      if (processingConfig.datasetMode !== 'check') {
+        await moveToFtp(ftp, dir, folder, !!errors.length, pluginConfig.ftpBasePath, log)
+      }
     } else {
       await log.info('aucun fichier à importer')
     }
@@ -97,6 +99,8 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     await log.info('le jeu de donnée a été vidé de ses données')
     await fs.remove(dir)
     await log.info('le répertoire de travail a été vidé de ses données')
+  } else if (processingConfig.datasetMode === 'check') {
+    return
   }
 
   // read files in folder/archive and calculate history

@@ -57,11 +57,15 @@ describe('Hello world processing', () => {
         // datasetMode: 'create',
         // dataset: { title: 'Historique RGE test 3', overwrite: false },
         datasetMode: 'update',
-        dataset: { id: 'historique-rge-test-2-2', title: 'Historique RGE test 2', overwrite: false },
-        folders: ['qualifelec'],
+        dataset: { id: '32yun3lr46-skfjyl3ep0l69', title: 'Historique RGE test !' },
+        folders: ['cerqual'],
         maxDays: 2,
-        datasetLienDomaineQualif: { id: 'rge-lien-domaine-qualification', title: 'RGE - Lien domaine qualification' },
-        datasetContactsOrganismes: { id: 'contacts-organismes', title: 'RGE - Contacts organismes' }
+        datasetLienDomaineQualif: { id: 'yemnncmqiu43awy1lig9-qya', title: 'RGE - Lien domaine qualification' },
+        datasetContactsOrganismes: { id: 'contacts-organismes', title: 'RGE - Contacts organismes' },
+        datasetsOrganismes: [{
+          dataset: { id: 'hzqyaczl777z6wve8lbp6d91', title: 'RGE - Crequal' },
+          organisme: 'cerqual'
+        }]
       },
       processingId: 'test',
       axios: axiosInstance,

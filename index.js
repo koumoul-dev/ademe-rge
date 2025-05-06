@@ -118,7 +118,8 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       await log.info(`nombre de jours restreint par la configuration : ${days.length}`)
     }
 
-    for (const day of days) {
+    const orgaDataset = (processingConfig.datasetsOrganismes || []).find(d => d.organisme === folder)?.dataset
+    for (const [idx, day] of days.entries()) {
       const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, pluginConfig.ftpBasePath, log)
       const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, day, historyData, processingConfig)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
@@ -132,6 +133,29 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       if (previousDay) await clearFiles(dir, folder, previousDay, log)
       previousState = state
       previousDay = day
+      if (idx === days.length - 1 && orgaDataset) {
+        await log.info(`Mise à jour du jeu de données : ${orgaDataset.title}`)
+        const lines = Object.values(state).map(s => ({
+          siret: s.siret,
+          telephone: s.telephone,
+          email: s.email,
+          site_internet: s.site_internet,
+          code_qualification: s.code_qualification,
+          lien_date_debut: s.lien_date_debut,
+          lien_date_fin: s.lien_date_fin,
+          url_qualification: s.url_qualification,
+          nom_certificat: s.nom_certificat,
+          particulier: s.particulier
+        }))
+        const result = (await axios.post(`api/v1/datasets/${orgaDataset.id}/_bulk_lines?drop=true`, lines)).data
+        await log.info(`lignes chargées: ${result.nbOk.toLocaleString()} ok, ${result.nbErrors.toLocaleString()} en erreur`)
+        if (result.nbErrors) {
+          await log.error(`${result.nbErrors} erreurs rencontrées`)
+          for (const error of result.errors) {
+            await log.error(JSON.stringify(error))
+          }
+        }
+      }
     }
   }
   await repairDomains(axios, dataset, qualifDomaine, log)

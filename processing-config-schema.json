@@ -1,123 +1,211 @@
 {
   "type": "object",
   "x-display": "tabs",
-  "required": ["datasetMode", "datasetLienDomaineQualif", "datasetContactsOrganismes"],
-  "allOf": [{
-    "title": "Jeu de données",
-    "oneOf": [{
-      "title": "Créer un jeu de données",
-      "required": ["dataset"],
-      "properties": {
-        "datasetMode": { "type": "string", "const": "create", "title": "Action" },
-        "dataset": {
-          "type": "object",
-          "required": ["title"],
+  "required": [
+    "datasetMode",
+    "datasetLienDomaineQualif",
+    "datasetContactsOrganismes"
+  ],
+  "allOf": [
+    {
+      "title": "Jeu de données",
+      "oneOf": [
+        {
+          "title": "Créer un jeu de données",
+          "required": ["dataset"],
           "properties": {
-            "id": {"type": "string", "title": "Identifiant (laissez vide pour calculer un identifiant à partir du titre)"},
-            "title": {"type": "string", "title": "Titre", "default": "Historique RGE"}
+            "datasetMode": {
+              "type": "string",
+              "const": "create",
+              "title": "Action"
+            },
+            "dataset": {
+              "type": "object",
+              "required": ["title"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "title": "Identifiant (laissez vide pour calculer un identifiant à partir du titre)"
+                },
+                "title": {
+                  "type": "string",
+                  "title": "Titre",
+                  "default": "Historique RGE"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Mettre à jour un jeu de données",
+          "required": ["dataset"],
+          "properties": {
+            "datasetMode": { "type": "string", "const": "update" },
+            "dataset": {
+              "type": "object",
+              "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+              "x-itemsProp": "results",
+              "x-itemTitle": "title",
+              "x-itemKey": "id",
+              "properties": {
+                "id": { "type": "string", "title": "Identifiant" },
+                "title": { "type": "string", "title": "Titre" }
+              }
+            }
+          }
+        },
+        {
+          "title": "Mettre à jour un jeu de données en recommançant de 0",
+          "required": ["dataset"],
+          "properties": {
+            "datasetMode": { "type": "string", "const": "clean_update" },
+            "dataset": {
+              "type": "object",
+              "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+              "x-itemsProp": "results",
+              "x-itemTitle": "title",
+              "x-itemKey": "id",
+              "properties": {
+                "id": { "type": "string", "title": "Identifiant" },
+                "title": { "type": "string", "title": "Titre" }
+              }
+            }
+          }
+        },
+        {
+          "title": "Vérifier les données chargées",
+          "properties": {
+            "datasetMode": { "type": "string", "const": "check" }
           }
         }
-      }
-    }, {
-      "title": "Mettre à jour un jeu de données",
-      "required": ["dataset"],
+      ]
+    },
+    {
+      "title": "Paramètres",
       "properties": {
-        "datasetMode": { "type": "string", "const": "update" },
-        "dataset": {
+        "datasetLienDomaineQualif": {
+          "title": "Jeu de données de référence - Lien domaine qualification",
           "type": "object",
           "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
           "x-itemsProp": "results",
           "x-itemTitle": "title",
           "x-itemKey": "id",
           "properties": {
-            "id": {"type": "string", "title": "Identifiant"},
-            "title": {"type": "string", "title": "Titre"}
+            "id": { "type": "string", "title": "Identifiant" },
+            "title": { "type": "string", "title": "Titre" }
           }
-        }
-      }
-    }, {
-      "title": "Mettre à jour un jeu de données en recommançant de 0",
-      "required": ["dataset"],
-      "properties": {
-        "datasetMode": { "type": "string", "const": "clean_update" },
-        "dataset": {
+        },
+        "datasetContactsOrganismes": {
+          "title": "Jeu de données de référence - Contacts organismes",
           "type": "object",
           "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
           "x-itemsProp": "results",
           "x-itemTitle": "title",
-          "x-itemKey": "href",
+          "x-itemKey": "id",
           "properties": {
-            "id": {"type": "string", "title": "Identifiant"},
-            "title": {"type": "string", "title": "Titre"}
+            "id": { "type": "string", "title": "Identifiant" },
+            "title": { "type": "string", "title": "Titre" }
           }
+        },
+        "datasetsOrganismes": {
+          "title": "Jeux de données des organismes",
+          "type": "array",
+          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "id",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dataset": {
+                "type": "object",
+                "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+                "x-itemsProp": "results",
+                "x-itemTitle": "title",
+                "x-itemKey": "id",
+                "properties": {
+                  "id": { "type": "string", "title": "Identifiant" },
+                  "title": { "type": "string", "title": "Titre" },
+                  "href": { "type": "string", "title": "URL" }
+                }
+              },
+              "organisme": {
+                "type": "string",
+                "enum": [
+                  "afnor",
+                  "cequami",
+                  "certibat",
+                  "cnoa",
+                  "opqibi",
+                  "qualibat",
+                  "qualifelec",
+                  "qualitenr",
+                  "lne",
+                  "opqtecc",
+                  "cerqual"
+                ]
+              }
+            }
+          }
+        },
+        "datasetLandingZone": {
+          "title": "Jeu de données de dépôt des données",
+          "type": "object",
+          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "id",
+          "properties": {
+            "id": { "type": "string", "title": "Identifiant" },
+            "title": { "type": "string", "title": "Titre" }
+          }
+        },
+        "folders": {
+          "type": "array",
+          "title": "Répertoires",
+          "default": [
+            "afnor",
+            "cequami",
+            "certibat",
+            "cnoa",
+            "opqibi",
+            "qualibat",
+            "qualifelec",
+            "qualitenr",
+            "lne",
+            "opqtecc",
+            "cerqual"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "afnor",
+              "cequami",
+              "certibat",
+              "cnoa",
+              "opqibi",
+              "qualibat",
+              "qualifelec",
+              "qualitenr",
+              "lne",
+              "opqtecc",
+              "cerqual"
+            ]
+          }
+        },
+        "maxDays": {
+          "type": "number",
+          "title": "Nombre maximum de jours",
+          "default": -1,
+          "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
+          "minimum": -1
+        },
+        "forceLinkDatesUpdate": {
+          "type": "boolean",
+          "title": "Forcer la mise à jour des dates de lien",
+          "default": false
         }
-      }
-    }, {
-      "title": "Vérifier les données chargées",
-      "properties": {
-        "datasetMode": { "type": "string", "const": "check" }
-      }
-    }]
-  }, {
-    "title": "Paramètres",
-    "properties": {
-      "datasetLienDomaineQualif": {
-        "title": "Jeu de données de référence - Lien domaine qualification",
-        "type": "object",
-        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "id",
-        "properties": {
-          "id": {"type": "string", "title": "Identifiant"},
-          "title": {"type": "string", "title": "Titre"}
-        }
-      },
-      "datasetContactsOrganismes": {
-        "title": "Jeu de données de référence - Contacts organismes",
-        "type": "object",
-        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "id",
-        "properties": {
-          "id": {"type": "string", "title": "Identifiant"},
-          "title": {"type": "string", "title": "Titre"}
-        }
-      },
-      "datasetLandingZone": {
-        "title": "Jeu de données de dépôt des données",
-        "type": "object",
-        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "id",
-        "properties": {
-          "id": {"type": "string", "title": "Identifiant"},
-          "title": {"type": "string", "title": "Titre"}
-        }
-      },
-      "folders": {
-        "type": "array",
-        "title": "Répertoires",
-        "default": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc","cerqual"],
-        "items": {
-          "type": "string",
-          "enum": ["afnor","cequami","certibat","cnoa","opqibi","qualibat","qualifelec","qualitenr","lne","opqtecc","cerqual"]
-        }
-      },
-      "maxDays": {
-        "type": "number",
-        "title": "Nombre maximum de jours",
-        "default": -1,
-        "description": "Nombre maximum de jours à traiter par exécution du traitement (-1 pour illimité)",
-        "minimum": -1
-      },
-      "forceLinkDatesUpdate": {
-        "type": "boolean",
-        "title": "Forcer la mise à jour des dates de lien",
-        "default": false
       }
     }
-  }]
+  ]
 }

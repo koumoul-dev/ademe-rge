@@ -110,10 +110,6 @@
         "datasetsOrganismes": {
           "title": "Jeux de données des organismes",
           "type": "array",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
           "items": {
             "type": "object",
             "properties": {

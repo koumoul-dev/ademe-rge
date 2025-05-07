@@ -58,13 +58,14 @@ describe('Hello world processing', () => {
         // dataset: { title: 'Historique RGE test 3', overwrite: false },
         datasetMode: 'update',
         dataset: { id: '32yun3lr46-skfjyl3ep0l69', title: 'Historique RGE test !' },
-        folders: ['cerqual'],
+        folders: ['cnoa'],
         maxDays: 2,
         datasetLienDomaineQualif: { id: 'yemnncmqiu43awy1lig9-qya', title: 'RGE - Lien domaine qualification' },
         datasetContactsOrganismes: { id: 'contacts-organismes', title: 'RGE - Contacts organismes' },
         datasetsOrganismes: [{
-          dataset: { id: 'hzqyaczl777z6wve8lbp6d91', title: 'RGE - Crequal' },
-          organisme: 'cerqual'
+          // dataset: { id: 'hzqyaczl777z6wve8lbp6d91', title: 'RGE - Crequal' },
+          dataset: { id: 'k14zg3p3m93odlg9fzxnaqyj', title: 'RGE - Cnoa' },
+          organisme: 'cnoa'
         }]
       },
       processingId: 'test',

@@ -152,7 +152,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
         if (result.nbErrors) {
           await log.error(`${result.nbErrors} erreurs rencontrées`)
           for (const error of result.errors) {
-            await log.error(JSON.stringify(error))
+            await log.error(JSON.stringify(error), JSON.stringify(lines[error.line]))
           }
         }
       }

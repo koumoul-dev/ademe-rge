@@ -147,13 +147,18 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
           nom_certificat: s.nom_certificat,
           particulier: s.particulier
         }))
-        const result = (await axios.post(`api/v1/datasets/${orgaDataset.id}/_bulk_lines?drop=true`, lines)).data
-        await log.info(`lignes chargées: ${result.nbOk.toLocaleString()} ok, ${result.nbErrors.toLocaleString()} en erreur`)
-        if (result.nbErrors) {
-          await log.error(`${result.nbErrors} erreurs rencontrées`)
-          for (const error of result.errors) {
-            await log.error(JSON.stringify(error), JSON.stringify(lines[error.line]))
+        try {
+          const result = (await axios.post(`api/v1/datasets/${orgaDataset.id}/_bulk_lines?drop=true`, lines)).data
+          await log.info(`lignes chargées: ${result.nbOk.toLocaleString()} ok, ${result.nbErrors.toLocaleString()} en erreur`)
+          if (result.nbErrors) {
+            await log.error(`${result.nbErrors} erreurs rencontrées`)
+            for (const error of result.errors) {
+              await log.error(JSON.stringify(error), JSON.stringify(lines[error.line]))
+            }
           }
+        } catch (err) {
+          await log.error('Erreur lors du chargement du fichier')
+          await log.error(err)
         }
       }
     }

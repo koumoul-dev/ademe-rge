@@ -1,4 +1,6 @@
 // main execution method
+const { prepareAxiosError, getHttpErrorMessage } = require('./lib/utils')
+
 exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios, log, patchConfig, sendMail }) => {
   const fs = require('fs-extra')
   const path = require('path')
@@ -156,9 +158,11 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
               await log.error(JSON.stringify(error), JSON.stringify(lines[error.line]))
             }
           }
-        } catch (err) {
+        } catch (_err) {
           await log.error('Erreur lors du chargement du fichier')
-          await log.error(err)
+          const err = prepareAxiosError(_err)
+          const message = getHttpErrorMessage(err) || err.message || err
+          await log.error(message)
         }
       }
     }

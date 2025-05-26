@@ -26,35 +26,35 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const qualifDomaineLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetLienDomaineQualif.id}/lines`, { params: { size: 10000 } })).data.results
   const qualifDomaine = qualifDomaineLines.reduce((a, qd) => { a[qd.CODE_QUALIFICATION] = qd; return a }, {})
   await log.info(`${qualifDomaineLines.length} lignes dans les données de référence "${processingConfig.datasetLienDomaineQualif.title}"`)
-  if (!processingConfig.datasetContactsOrganismes) throw new Error('La configuration ne contient pas de lien vers un jeu de données "Contacts organismes"')
-  const contactsOrganismesLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetContactsOrganismes.id}/lines`, { params: { size: 10000 } })).data.results
-  const contactsOrganismes = contactsOrganismesLines.reduce((a, ca) => { a[ca.ORGANISME] = ca; return a }, {})
-  await log.info(`${contactsOrganismesLines.length} lignes dans les données de référence "${processingConfig.datasetContactsOrganismes.title}"`)
-  if (processingConfig.datasetLandingZone && processingConfig.datasetMode !== 'check') {
-    await log.info(`synchronisation des fichers déposés sur le jeu de données "${processingConfig.datasetLandingZone.title}"`)
-    await axios.post(`api/v1/datasets/${processingConfig.datasetLandingZone.id}/_sync_attachments_lines`)
-  }
+  // if (!processingConfig.datasetContactsOrganismes) throw new Error('La configuration ne contient pas de lien vers un jeu de données "Contacts organismes"')
+  // const contactsOrganismesLines = (await axios.get(`api/v1/datasets/${processingConfig.datasetContactsOrganismes.id}/lines`, { params: { size: 10000 } })).data.results
+  // const contactsOrganismes = contactsOrganismesLines.reduce((a, ca) => { a[ca.ORGANISME] = ca; return a }, {})
+  // await log.info(`${contactsOrganismesLines.length} lignes dans les données de référence "${processingConfig.datasetContactsOrganismes.title}"`)
+  // if (processingConfig.datasetLandingZone && processingConfig.datasetMode !== 'check') {
+  //   await log.info(`synchronisation des fichers déposés sur le jeu de données "${processingConfig.datasetLandingZone.title}"`)
+  //   await axios.post(`api/v1/datasets/${processingConfig.datasetLandingZone.id}/_sync_attachments_lines`)
+  // }
 
-  // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
-  const { downloadAndValidate, moveToFtp, sendValidationErrors } = require('./lib/import-validate')
-  for (const folder of processingConfig.folders) {
-    await log.step(`Import et validation du répertoire ${folder}`)
-    await log.info('récupération de la liste des fichiers dans le répertoire')
+  // // read .tar.gz uploaded by partners, and move content to archive if it is valid  or error folder otherwise
+  // const { downloadAndValidate, moveToFtp, sendValidationErrors } = require('./lib/import-validate')
+  // for (const folder of processingConfig.folders) {
+  //   await log.step(`Import et validation du répertoire ${folder}`)
+  //   await log.info('récupération de la liste des fichiers dans le répertoire')
 
-    const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder))
-    const csvs = files.map(f => f.name).filter(f => ['entreprises.csv', 'qualifications.csv', 'liens.csv'].includes(f))
-    if (csvs.length) {
-      const errors = await downloadAndValidate(ftp, dir, folder, csvs, pluginConfig.ftpBasePath, log)
-      if (errors.length && processingConfig.datasetMode !== 'check') {
-        await sendValidationErrors(folder, contactsOrganismes, errors, log, sendMail)
-      }
-      if (processingConfig.datasetMode !== 'check') {
-        await moveToFtp(ftp, dir, folder, !!errors.length, pluginConfig.ftpBasePath, log)
-      }
-    } else {
-      await log.info('aucun fichier à importer')
-    }
-  }
+  //   const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder))
+  //   const csvs = files.map(f => f.name).filter(f => ['entreprises.csv', 'qualifications.csv', 'liens.csv'].includes(f))
+  //   if (csvs.length) {
+  //     const errors = await downloadAndValidate(ftp, dir, folder, csvs, pluginConfig.ftpBasePath, log)
+  //     if (errors.length && processingConfig.datasetMode !== 'check') {
+  //       await sendValidationErrors(folder, contactsOrganismes, errors, log, sendMail)
+  //     }
+  //     if (processingConfig.datasetMode !== 'check') {
+  //       await moveToFtp(ftp, dir, folder, !!errors.length, pluginConfig.ftpBasePath, log)
+  //     }
+  //   } else {
+  //     await log.info('aucun fichier à importer')
+  //   }
+  // }
 
   const datasetSchema = require('./resources/schema.json')
   let dataset
@@ -155,7 +155,8 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
           if (result.nbErrors) {
             await log.error(`${result.nbErrors} erreurs rencontrées`)
             for (const error of result.errors) {
-              await log.error(JSON.stringify(error), JSON.stringify(lines[error.line]))
+              await log.error(JSON.stringify(error))
+              await log.error(JSON.stringify(lines[error.line]))
             }
           }
         } catch (_err) {

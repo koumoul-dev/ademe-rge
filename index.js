@@ -138,6 +138,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       if (idx === days.length - 1 && orgaDataset) {
         await log.info(`Mise à jour du jeu de données : ${orgaDataset.title}`)
         const lines = Object.values(state).map(s => ({
+          _action: 'create',
           siret: s.siret,
           telephone: s.telephone,
           email: s.email,

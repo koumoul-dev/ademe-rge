@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "x-display": "tabs",
+  "layout": "tabs",
   "required": [
     "datasetMode",
     "datasetLienDomaineQualif",
@@ -43,10 +43,14 @@
             "datasetMode": { "type": "string", "const": "update" },
             "dataset": {
               "type": "object",
-              "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-              "x-itemsProp": "results",
-              "x-itemTitle": "title",
-              "x-itemKey": "id",
+              "layout": {
+                "getItems": {
+                  "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+                  "itemsResults": "data.results",
+                  "itemTitle": "item.title",
+                  "itemKey": "item.id"
+                }
+              },
               "properties": {
                 "id": { "type": "string", "title": "Identifiant" },
                 "title": { "type": "string", "title": "Titre" }
@@ -55,16 +59,20 @@
           }
         },
         {
-          "title": "Mettre à jour un jeu de données en recommançant de 0",
+          "title": "Mettre à jour un jeu de données en recommençant de 0",
           "required": ["dataset"],
           "properties": {
             "datasetMode": { "type": "string", "const": "clean_update" },
             "dataset": {
               "type": "object",
-              "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-              "x-itemsProp": "results",
-              "x-itemTitle": "title",
-              "x-itemKey": "id",
+              "layout": {
+                "getItems": {
+                  "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+                  "itemsResults": "data.results",
+                  "itemTitle": "item.title",
+                  "itemKey": "item.id"
+                }
+              },
               "properties": {
                 "id": { "type": "string", "title": "Identifiant" },
                 "title": { "type": "string", "title": "Titre" }
@@ -86,10 +94,14 @@
         "datasetLienDomaineQualif": {
           "title": "Jeu de données de référence - Lien domaine qualification",
           "type": "object",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
+          "layout": {
+            "getItems": {
+              "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+              "itemsResults": "data.results",
+              "itemTitle": "item.title",
+              "itemKey": "item.id"
+            }
+          },
           "properties": {
             "id": { "type": "string", "title": "Identifiant" },
             "title": { "type": "string", "title": "Titre" }
@@ -98,10 +110,14 @@
         "datasetContactsOrganismes": {
           "title": "Jeu de données de référence - Contacts organismes",
           "type": "object",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
+          "layout": {
+            "getItems": {
+              "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+              "itemsResults": "data.results",
+              "itemTitle": "item.title",
+              "itemKey": "item.id"
+            }
+          },
           "properties": {
             "id": { "type": "string", "title": "Identifiant" },
             "title": { "type": "string", "title": "Titre" }
@@ -115,10 +131,14 @@
             "properties": {
               "dataset": {
                 "type": "object",
-                "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-                "x-itemsProp": "results",
-                "x-itemTitle": "title",
-                "x-itemKey": "id",
+                "layout": {
+                  "getItems": {
+                    "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+                    "itemsResults": "data.results",
+                    "itemTitle": "item.title",
+                    "itemKey": "item.id"
+                  }
+                },
                 "properties": {
                   "id": { "type": "string", "title": "Identifiant" },
                   "title": { "type": "string", "title": "Titre" },
@@ -147,10 +167,14 @@
         "datasetLandingZone": {
           "title": "Jeu de données de dépôt des données",
           "type": "object",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
+          "layout": {
+            "getItems": {
+              "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+              "itemsResults": "data.results",
+              "itemTitle": "item.title",
+              "itemKey": "item.id"
+            }
+          },
           "properties": {
             "id": { "type": "string", "title": "Identifiant" },
             "title": { "type": "string", "title": "Titre" }
@@ -158,6 +182,7 @@
         },
         "folders": {
           "type": "array",
+          "layout": "select",
           "title": "Répertoires",
           "default": [
             "afnor",

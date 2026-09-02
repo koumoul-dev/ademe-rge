@@ -19,21 +19,17 @@ npm test
 
 ## Release
 
-Processing plugins are fetched from the npm registry with a filter on keyword "data-fair-processings-plugin". So publishing a plugin is as simple as publishing the npm package:
+The plugin is published to the data-fair registry by GitHub Actions:
+
+- every push on `master` publishes to the **staging** registry (`publish-staging.yml`)
+- pushing a `v*` tag publishes to the **production** registry (`publish-production.yml`)
+
+The tag must match the version in `package.json`, otherwise the workflow fails.
 
 ```
 npm version minor
-npm publish
 git push && git push --tags
 ```
 
-To publish a test version, use prerelease versioning with a "test" npm tag:
-
-```
-# new prerelease
-npm version preminor --preid=beta
-# increment prerelease
-npm version prerelease --preid=beta
-npm publish --tag=test
-git push && git push --tags
-```
+Both workflows need a `REGISTRY_API_KEY` secret, defined on the `staging` and `production`
+GitHub environments of the repository.

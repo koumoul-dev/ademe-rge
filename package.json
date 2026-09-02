@@ -5,22 +5,41 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --exit",
-    "lint": "eslint --ignore-path .gitignore .",
-    "lint-fix": "eslint --ignore-path .gitignore --fix .",
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "prepare": "husky || true",
     "proto": "pbf resources/history.proto > resources/history-proto.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koumoul-dev/ademe-rge.git"
   },
   "author": "Koumoul <contact@koumoul.com>",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/koumoul-dev/ademe-rge/issues"
+  },
+  "homepage": "https://github.com/koumoul-dev/ademe-rge#readme",
   "keywords": [
     "data-fair-processings-plugin"
   ],
+  "files": [
+    "index.js",
+    "lib/**/*",
+    "resources/**/*",
+    "processing-config-schema.json",
+    "plugin-config-schema.json"
+  ],
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "axios": "^0.21.1",
     "chalk": "^4.1.0",
     "config": "^3.3.6",
-    "eslint": "^7.18.0",
+    "eslint": "^9.26.0",
+    "husky": "^9.1.7",
     "mocha": "^8.2.1",
-    "standard": "^16.0.3"
+    "neostandard": "^0.12.1"
   },
   "dependencies": {
     "csv-parse": "^4.15.0",

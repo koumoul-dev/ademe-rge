@@ -4,3 +4,4 @@ data/
 errors.log
 misc/
 /qualifelec-ftp
+*.tgz

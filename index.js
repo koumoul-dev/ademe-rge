@@ -92,8 +92,9 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const { readHistoryData } = require('./lib/history')
   const { readDailyState, clearFiles } = require('./lib/daily-state')
   const repairDomains = require('./lib/repair-domains')
+  const diffBulk = require('./lib/diff-bulk')
   for (const folder of processingConfig.folders) {
-    log.step(`Traitement du répertoire ${folder}`)
+    await log.step(`Traitement du répertoire ${folder}`)
     await fs.ensureDir(path.join(dir, folder))
     await log.info(`récupération de la liste des fichiers dans le répertoire ${folder}/archive`)
     const files = await ftp.list(path.join(pluginConfig.ftpBasePath, folder, '/archive'))
@@ -123,10 +124,10 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
     const orgaDataset = (processingConfig.datasetsOrganismes || []).find(d => d.organisme === folder)?.dataset
     for (const [idx, day] of days.entries()) {
       const state = await readDailyState(ftp, dir, folder, day, qualifDomaine, pluginConfig.ftpBasePath, log)
-      const { stats, bulk } = await require('./lib/diff-bulk')(previousState, state, day, historyData, processingConfig)
+      const { stats, bulk } = await diffBulk(previousState, state, day, historyData, processingConfig)
       await log.info(`enregistrement des modifications pour le jour ${day} : ouvertures=${stats.created}, fermetures=${stats.closed}, modifications=${stats.updated}, inchangés=${stats.unmodified}`)
-      while (bulk.length) {
-        const lines = bulk.splice(0, 1000)
+      for (let i = 0; i < bulk.length; i += 1000) {
+        const lines = bulk.slice(i, i + 1000)
         const res = await axios.post(`api/v1/datasets/${dataset.id}/_bulk_lines`, lines)
         if (res.data.nbErrors) log.error(`${res.data.nbErrors} échecs sur ${lines.length} lignes à insérer`, res.data.errors)
       }

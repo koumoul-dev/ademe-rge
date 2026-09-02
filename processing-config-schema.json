@@ -158,7 +158,8 @@
                   "qualitenr",
                   "lne",
                   "opqtecc",
-                  "cerqual"
+                  "cerqual",
+                  "qualiclimafroid"
                 ]
               }
             }
@@ -195,7 +196,8 @@
             "qualitenr",
             "lne",
             "opqtecc",
-            "cerqual"
+            "cerqual",
+            "qualiclimafroid"
           ],
           "items": {
             "type": "string",
@@ -210,7 +212,8 @@
               "qualitenr",
               "lne",
               "opqtecc",
-              "cerqual"
+              "cerqual",
+              "qualiclimafroid"
             ]
           }
         },

@@ -93,6 +93,7 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
   const { readDailyState, clearFiles } = require('./lib/daily-state')
   const repairDomains = require('./lib/repair-domains')
   const diffBulk = require('./lib/diff-bulk')
+  const { updateOrgaDataset } = require('./lib/orga-dataset')
   for (const folder of processingConfig.folders) {
     await log.step(`Traitement du répertoire ${folder}`)
     await fs.ensureDir(path.join(dir, folder))
@@ -138,29 +139,8 @@ exports.run = async ({ pluginConfig, processingConfig, processingId, dir, axios,
       previousDay = day
       if (idx === days.length - 1 && orgaDataset) {
         await log.info(`Mise à jour du jeu de données : ${orgaDataset.title}`)
-        const lines = Object.values(state).map(s => ({
-          _action: 'create',
-          siret: s.siret,
-          telephone: s.telephone,
-          email: s.email,
-          site_internet: s.site_internet,
-          code_qualification: s.code_qualification,
-          lien_date_debut: s.lien_date_debut,
-          lien_date_fin: s.lien_date_fin,
-          url_qualification: s.url_qualification,
-          nom_certificat: s.nom_certificat,
-          particulier: s.particulier
-        }))
         try {
-          const result = (await axios.post(`api/v1/datasets/${orgaDataset.id}/_bulk_lines?drop=true`, lines)).data
-          await log.info(`lignes chargées: ${result.nbOk.toLocaleString()} ok, ${result.nbErrors.toLocaleString()} en erreur`)
-          if (result.nbErrors) {
-            await log.error(`${result.nbErrors} erreurs rencontrées`)
-            for (const error of result.errors) {
-              await log.error(JSON.stringify(error))
-              await log.error(JSON.stringify(lines[error.line]))
-            }
-          }
+          await updateOrgaDataset(axios, orgaDataset, Object.values(state), folder, log)
         } catch (_err) {
           await log.error('Erreur lors du chargement du fichier')
           const err = prepareAxiosError(_err)
